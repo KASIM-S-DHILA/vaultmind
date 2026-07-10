@@ -65,7 +65,9 @@
     "asarUnpack": [
       "node_modules/node-llama-cpp/**",
       "node_modules/better-sqlite3/**",
-      "node_modules/@lancedb/**"
+      "node_modules/@lancedb/**",
+      "node_modules/apache-arrow/**",
+      "node_modules/reflect-metadata/**"
     ],
     "win": {
       "target": "nsis",
