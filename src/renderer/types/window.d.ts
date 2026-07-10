@@ -46,6 +46,8 @@ interface VaultMindAPI {
     warmupModel: (modelName: string) => Promise<void>;
     downloadAndInstall: (onProgress: (data: { percent: number; status: string; message: string }) => void) => Promise<void>;
     startServer: () => Promise<void>;
+    setAutoStart: (enabled: boolean) => Promise<{ success: boolean }>;
+    getAutoStart: () => Promise<boolean>;
   };
   onServerStatus: (cb: (data: { stage: string; progress: number; message: string }) => void) => () => void;
   setup: {

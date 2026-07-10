@@ -7,6 +7,8 @@ import {
   warmupModel,
   downloadAndInstallOllama,
   startOllamaServer,
+  setOllamaAutoStart,
+  getOllamaAutoStart,
 } from '../engine/ollama';
 
 export function registerOllamaHandlers(): void {
@@ -36,5 +38,13 @@ export function registerOllamaHandlers(): void {
 
   ipcMain.handle(IPC.OLLAMA.START_SERVER, async () => {
     await startOllamaServer();
+  });
+
+  ipcMain.handle(IPC.OLLAMA.SET_AUTO_START, async (_event, enabled: boolean) => {
+    return { success: setOllamaAutoStart(enabled) };
+  });
+
+  ipcMain.handle(IPC.OLLAMA.GET_AUTO_START, async () => {
+    return getOllamaAutoStart();
   });
 }

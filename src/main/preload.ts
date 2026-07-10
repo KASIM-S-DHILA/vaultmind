@@ -79,6 +79,8 @@ contextBridge.exposeInMainWorld('vaultmind', {
       });
     },
     startServer: () => ipcRenderer.invoke(IPC.OLLAMA.START_SERVER),
+    setAutoStart: (enabled: boolean) => ipcRenderer.invoke(IPC.OLLAMA.SET_AUTO_START, enabled),
+    getAutoStart: () => ipcRenderer.invoke(IPC.OLLAMA.GET_AUTO_START),
   },
 
   onServerStatus: (cb: (data: unknown) => void) => {

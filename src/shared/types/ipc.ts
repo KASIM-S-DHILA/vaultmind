@@ -53,6 +53,8 @@ export const IPC = {
     DOWNLOAD_INSTALL: 'ollama:downloadInstall',
     DOWNLOAD_PROGRESS: 'ollama:downloadProgress',
     START_SERVER: 'ollama:startServer',
+    SET_AUTO_START: 'ollama:setAutoStart',
+    GET_AUTO_START: 'ollama:getAutoStart',
   },
   SETUP: {
     IS_COMPLETE: 'setup:isComplete',

@@ -8,10 +8,12 @@ export default function SettingsModal({ onClose }) {
   const [ollamaModels, setOllamaModels] = useState([]);
   const [ollamaLoading, setOllamaLoading] = useState(false);
   const [ollamaError, setOllamaError] = useState(null);
+  const [autoStart, setAutoStart] = useState(false);
   const { addToast } = useToast();
 
   useEffect(() => {
     loadData();
+    window.vaultmind.ollama.getAutoStart().then(setAutoStart);
   }, []);
 
   async function loadData() {
@@ -44,6 +46,16 @@ export default function SettingsModal({ onClose }) {
   async function handleSettingChange(key, value) {
     await window.vaultmind.settings.update(key, value);
     setSettings(prev => ({ ...prev, [key]: value }));
+  }
+
+  async function handleAutoStartToggle(enabled) {
+    const result = await window.vaultmind.ollama.setAutoStart(enabled);
+    if (result.success) {
+      setAutoStart(enabled);
+      addToast(enabled ? 'Ollama will start automatically with Windows' : 'Ollama auto-start disabled', 'success');
+    } else {
+      addToast('Failed to set auto-start. Is Ollama installed?', 'error');
+    }
   }
 
   const TABS = [
@@ -132,6 +144,38 @@ export default function SettingsModal({ onClose }) {
               )}
             </div>
 
+            {/* Auto-start toggle */}
+            <div style={{ padding: 16, background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-strong)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>🚀 Start Ollama with Windows</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+                    Automatically starts Ollama server in the background when you log in
+                  </div>
+                </div>
+                <label style={{ position: 'relative', display: 'inline-block', width: 40, height: 22, flexShrink: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={autoStart}
+                    onChange={e => handleAutoStartToggle(e.target.checked)}
+                    style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }}
+                  />
+                  <span style={{
+                    position: 'absolute', cursor: 'pointer', inset: 0,
+                    background: autoStart ? 'var(--accent)' : 'var(--bg-hover)',
+                    borderRadius: 22, transition: 'all 0.2s',
+                    border: '1px solid var(--border-strong)',
+                  }}>
+                    <span style={{
+                      position: 'absolute', width: 16, height: 16, borderRadius: '50%',
+                      background: 'white', top: 2,
+                      left: autoStart ? 20 : 2,
+                      transition: 'all 0.2s',
+                    }} />
+                  </span>
+                </label>
+              </div>
+            </div>
 
           </div>
         )}

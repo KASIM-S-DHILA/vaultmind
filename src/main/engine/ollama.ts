@@ -8,6 +8,8 @@ import { logger } from '../../shared/logger';
 import { OLLAMA_POLL_INTERVAL, OLLAMA_STARTUP_TIMEOUT } from '../../shared/constants';
 import type { OllamaModelInfo, OllamaCheckResult } from '../../shared/types';
 
+const STARTUP_SHORTCUT_NAME = 'VaultMind - Ollama Server.lnk';
+
 let ollamaProcess: ReturnType<typeof spawn> | null = null;
 
 async function getOllamaUrl(): Promise<string> {
@@ -175,6 +177,42 @@ export async function warmupModel(modelName: string): Promise<void> {
   if (!res.ok) {
     throw new Error(`Model warmup failed: ${res.status}`);
   }
+}
+
+function findOllamaExePath(): string | null {
+  try {
+    const out = execSync('where ollama', { stdio: 'pipe', timeout: 5000, encoding: 'utf-8', windowsHide: true });
+    const p = out.trim().split('\n')[0];
+    if (p && fs.existsSync(p)) return p;
+  } catch {}
+  return null;
+}
+
+export function setOllamaAutoStart(enabled: boolean): boolean {
+  const startupDir = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup');
+  const shortcutPath = path.join(startupDir, STARTUP_SHORTCUT_NAME);
+  try {
+    if (!fs.existsSync(startupDir)) {
+      fs.mkdirSync(startupDir, { recursive: true });
+    }
+    if (enabled) {
+      const exePath = findOllamaExePath();
+      if (!exePath) return false;
+      const psScript = `$ws=New-Object -ComObject WScript.Shell;$s=$ws.CreateShortcut('${shortcutPath.replace(/'/g, "''")}');$s.TargetPath='${exePath.replace(/'/g, "''")}';$s.Arguments='serve';$s.WorkingDirectory='${path.dirname(exePath).replace(/'/g, "''")}';$s.Description='Ollama AI server (started by VaultMind)';$s.WindowStyle=7;$s.Save()`;
+      execSync(psScript, { stdio: 'pipe', timeout: 10000, windowsHide: true, shell: 'powershell' });
+    } else {
+      if (fs.existsSync(shortcutPath)) fs.unlinkSync(shortcutPath);
+    }
+    return true;
+  } catch (err) {
+    logger.warn('Ollama', 'Failed to set auto-start:', (err as Error).message);
+    return false;
+  }
+}
+
+export function getOllamaAutoStart(): boolean {
+  const startupDir = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup');
+  return fs.existsSync(path.join(startupDir, STARTUP_SHORTCUT_NAME));
 }
 
 export async function generateOllamaStream(options: {
