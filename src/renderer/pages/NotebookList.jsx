@@ -86,7 +86,7 @@ export default function NotebookList({ onOpenNotebook }) {
             </span>
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.7, maxWidth: 480 }}>
-            Analyze contracts, transcribe meetings, and extract insights from confidential documents —
+            Analyze contracts and extract insights from confidential documents —
             with zero data leaving your device.
           </p>
         </div>

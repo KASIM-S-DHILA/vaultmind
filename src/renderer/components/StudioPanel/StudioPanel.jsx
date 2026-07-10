@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './StudioPanel.css';
 
-export default function StudioPanel({ guide, guideLoading, notes, onSaveNotes, activeCitation, onQuestionClick }) {
+export default function StudioPanel({ guide, guideLoading, notes, onSaveNotes, activeCitation, onQuestionClick, onRefreshGuide }) {
   const [activeTab, setActiveTab] = useState('guide');
   const saveTimer = useRef(null);
 
@@ -47,6 +47,20 @@ export default function StudioPanel({ guide, guideLoading, notes, onSaveNotes, a
               </div>
             ) : guide ? (
               <>
+                {/* Refresh button */}
+                {onRefreshGuide && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                    <button
+                      className="btn btn-sm"
+                      onClick={onRefreshGuide}
+                      disabled={guideLoading}
+                      style={{ fontSize: 11, gap: 4 }}
+                    >
+                      {guideLoading ? '⟳' : '↻'} Refresh Guide
+                    </button>
+                  </div>
+                )}
+
                 {/* Overview */}
                 {guide.overview && (
                   <div className="studio-section">

@@ -2,7 +2,7 @@
   "name": "vaultmind",
   "version": "1.0.0",
   "description": "Local AI for Legal & Confidential Intelligence — 100% offline RAG assistant",
-  "main": "src/main/index.js",
+  "main": "dist-main/main/index.js",
   "homepage": "./",
   "author": {
     "name": "VaultMind",
@@ -14,11 +14,17 @@
     "start": "concurrently \"npm run dev:renderer\" \"npm run dev:electron\"",
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:electron\"",
     "dev:renderer": "vite src/renderer --port 5173",
-    "dev:electron": "wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .",
-    "build": "npm run build:renderer && npm run build:electron",
+    "dev:main": "tsc -p tsconfig.main.json",
+    "dev:electron": "npm run dev:main && wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .",
+    "build": "npm run build:renderer && npm run build:main && npm run build:electron",
     "build:renderer": "vite build src/renderer --outDir ../../dist/renderer",
+    "build:main": "tsc -p tsconfig.main.json",
     "build:electron": "electron-builder --win",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "typecheck:main": "tsc -p tsconfig.main.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
@@ -26,19 +32,30 @@
     "better-sqlite3": "^11.5.0",
     "electron-store": "^10.0.0",
     "fastembed": "^1.14.1",
-    "node-llama-cpp": "^3.3.0",
     "pdf-parse": "^1.1.1",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "electron": "^33.3.1",
     "electron-builder": "^25.1.8",
+    "happy-dom": "^20.10.6",
+    "jsdom": "^29.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "typescript": "^7.0.2",
     "vite": "^6.0.7",
+    "vitest": "^4.1.10",
     "wait-on": "^8.0.1"
   },
   "build": {
@@ -50,20 +67,20 @@
       "buildResources": "build"
     },
     "files": [
-      "src/main/**/*",
-      "dist/renderer/**/*",
-      "!src/renderer/**/*"
+      "dist-main/**/*",
+      "dist/renderer/**/*"
     ],
     "extraResources": [
       {
         "from": "models",
         "to": "models",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "asar": true,
     "asarUnpack": [
-      "node_modules/node-llama-cpp/**",
       "node_modules/better-sqlite3/**",
       "node_modules/@lancedb/**",
       "node_modules/apache-arrow/**",

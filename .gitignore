@@ -10,4 +10,8 @@ data/
 .DS_Store
 Thumbs.db
 *.log
-src/renderer/.vite/
+.vite/
+local_cache/
+dist-ts/
+dist-main/
+*.tsbuildinfo

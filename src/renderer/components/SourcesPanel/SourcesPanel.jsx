@@ -3,12 +3,11 @@ import SourceCard from './SourceCard';
 import UploadZone from './UploadZone';
 import './SourcesPanel.css';
 
-export default function SourcesPanel({ sources, loading, onUpload, onDelete, onSourceReady }) {
+export default function SourcesPanel({ sources, loading, onUpload, onDelete, onToggleActive }) {
   const [expandedId, setExpandedId] = useState(null);
   const [filter, setFilter] = useState('all');
 
   const filtered = sources.filter(s => filter === 'all' || s.file_type === filter);
-  const hasAudio = sources.some(s => s.file_type === 'audio');
 
   return (
     <div className="sources-panel">
@@ -23,13 +22,13 @@ export default function SourcesPanel({ sources, loading, onUpload, onDelete, onS
 
       {sources.length > 1 && (
         <div className="sources-filters">
-          {['all', 'pdf', 'txt', ...(hasAudio ? ['audio'] : [])].map(f => (
+          {['all', 'pdf', 'txt'].map(f => (
             <button
               key={f}
               className={`filter-chip ${filter === f ? 'active' : ''}`}
               onClick={() => setFilter(f)}
             >
-              {f === 'all' ? 'All' : f === 'pdf' ? '📄 PDF' : f === 'txt' ? '📝 Text' : '🎙️ Audio'}
+              {f === 'all' ? 'All' : f === 'pdf' ? 'PDF' : 'Text'}
             </button>
           ))}
         </div>
@@ -43,7 +42,7 @@ export default function SourcesPanel({ sources, loading, onUpload, onDelete, onS
             <div style={{ fontSize: 32, marginBottom: 10 }}>📂</div>
             <div style={{ fontWeight: 500, marginBottom: 4 }}>No sources yet</div>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center' }}>
-              Upload PDF, text, or audio files to get started
+              Upload PDF, TXT, MD, or CSV files to get started
             </div>
           </div>
         ) : (
@@ -54,6 +53,7 @@ export default function SourcesPanel({ sources, loading, onUpload, onDelete, onS
               expanded={expandedId === source.id}
               onToggle={() => setExpandedId(prev => prev === source.id ? null : source.id)}
               onDelete={() => onDelete(source.id)}
+              onToggleActive={() => onToggleActive(source.id, source.active === 0)}
             />
           ))
         )}

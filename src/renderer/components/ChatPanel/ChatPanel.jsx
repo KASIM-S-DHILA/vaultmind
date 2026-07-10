@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble';
-import TypingIndicator from './TypingIndicator';
 import './ChatPanel.css';
 
 export default function ChatPanel({
   messages, isStreaming, streamingContent, onSend, onClearHistory,
-  onCitationClick, suggestedQuestions,
+  onCitationClick, suggestedQuestions, modelLoading,
 }) {
   const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -106,6 +105,9 @@ export default function ChatPanel({
           </div>
         </div>
       )}
+
+      {/* Model loading bar */}
+      {modelLoading && <div className="model-loading-bar"><div className="model-loading-bar-inner" /></div>}
 
       {/* Input area */}
       <div className="chat-input-area">
