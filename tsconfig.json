@@ -22,6 +22,6 @@
       "@/*": ["./src/renderer/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/renderer/**/*.ts", "src/renderer/**/*.tsx", "src/shared/**/*.ts", "src/tests/**/*.ts"],
   "exclude": ["node_modules", "dist", "release", "dist-ts"]
 }
