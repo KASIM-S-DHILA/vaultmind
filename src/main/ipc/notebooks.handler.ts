@@ -50,8 +50,6 @@ export function registerNotebookHandlers(): void {
     }
     const cached = getNotebookGuide(id);
     if (cached) return JSON.parse(cached);
-    const guide = await generateNotebookGuide(id);
-    updateNotebookGuide(id, JSON.stringify(guide));
-    return guide;
+    return { overview: '', keyThemes: [], suggestedQuestions: [] };
   });
 }

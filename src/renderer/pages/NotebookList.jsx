@@ -76,18 +76,17 @@ export default function NotebookList({ onOpenNotebook }) {
         <div style={{ marginBottom: 48, maxWidth: 600 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--gold)', background: 'var(--gold-glow)', padding: '3px 10px', borderRadius: 'var(--radius-full)', border: '1px solid rgba(201,162,39,0.25)' }}>
-              ⚖ Legal AI Intelligence
+              🔒 Source-Grounded AI
             </span>
           </div>
           <h1 style={{ fontSize: 36, fontWeight: 700, letterSpacing: -1.5, lineHeight: 1.15, marginBottom: 14 }}>
-            Your Confidential<br />
+            Your Private<br />
             <span style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               AI Research Notebooks
             </span>
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.7, maxWidth: 480 }}>
-            Analyze contracts and extract insights from confidential documents —
-            with zero data leaving your device.
+            Upload any documents — PDFs, text, Markdown, or CSV — and get answers grounded in your sources. Everything runs locally, zero data leaves your device.
           </p>
         </div>
 

@@ -5,14 +5,14 @@ export default function WelcomeStep() {
     <div>
       <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>Welcome to VaultMind</h2>
       <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 20 }}>
-        VaultMind is a <strong style={{ color: 'var(--text-primary)' }}>fully private AI research assistant</strong> for
-        legal teams and professionals handling confidential documents.
+        VaultMind is a <strong style={{ color: 'var(--text-primary)' }}>fully private AI research assistant</strong> that
+        answers questions based on your documents. Everything runs locally on your machine.
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {[
           { icon: '🔒', title: '100% Offline', desc: 'Your documents never leave your device. No cloud, no telemetry.' },
-          { icon: '📄', title: 'PDF, Text & Audio', desc: 'Upload contracts, meeting recordings, and notes.' },
-          { icon: '⚖️', title: 'Legal-Grade AI', desc: 'Source-grounded answers with inline citations.' },
+          { icon: '📄', title: 'PDF, Text, Markdown & CSV', desc: 'Upload documents and get instant insights.' },
+          { icon: '🎯', title: 'Source-Grounded Answers', desc: 'Every response cites its sources — you can verify everything.' },
           { icon: '🔄', title: 'Ollama-Powered AI', desc: 'Pull any Ollama model from Settings. Swap anytime.' },
         ].map(item => (
           <div key={item.title} style={{

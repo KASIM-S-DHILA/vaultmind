@@ -87,7 +87,7 @@ export function createTray(mainWindow: BrowserWindow | null): Tray | null {
       { label: 'Quit', click: () => app.quit() },
     ]);
 
-    tray.setToolTip('VaultMind — Local AI Assistant');
+    tray.setToolTip('VaultMind — Private Source-Grounded AI');
     tray.setContextMenu(contextMenu);
     tray.on('double-click', () => { mainWindow?.show(); mainWindow?.focus(); });
     return tray;

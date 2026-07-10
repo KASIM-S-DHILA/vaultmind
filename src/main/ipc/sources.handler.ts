@@ -19,7 +19,7 @@ export function registerSourceHandlers(): void {
   ipcMain.handle(IPC.DIALOG.SELECT_FILES, async () => {
     const win = BrowserWindow.getFocusedWindow();
     const result = await dialog.showOpenDialog(win!, {
-      title: 'Add Sources to VaultMind',
+      title: 'Select Documents for VaultMind',
       properties: ['openFile', 'multiSelections'],
       filters: [
         { name: 'Documents', extensions: ['pdf', 'txt', 'md', 'csv'] },

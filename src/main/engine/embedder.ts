@@ -1,6 +1,6 @@
 import { EmbeddingModel, FlagEmbedding } from 'fastembed';
 import { getSetting } from '../database/settings';
-import { EMBEDDING_MODELS, CHUNK_DEFAULTS } from '../../shared/constants';
+import { DEFAULT_SETTINGS, EMBEDDING_MODELS, CHUNK_DEFAULTS } from '../../shared/constants';
 import { logger } from '../../shared/logger';
 
 type ModelName = keyof typeof EMBEDDING_MODELS;
@@ -15,7 +15,7 @@ let embedder: FlagEmbedding | null = null;
 let currentModelName: string | null = null;
 
 async function getEmbedder(): Promise<FlagEmbedding> {
-  const modelName = (getSetting('embedding_model') || 'all-MiniLM-L6-v2') as ModelName;
+  const modelName = (getSetting('embedding_model') || DEFAULT_SETTINGS.EMBEDDING_MODEL) as ModelName;
   if (embedder && currentModelName === modelName) return embedder;
 
   embedder = null;
@@ -52,7 +52,7 @@ export async function embedQuery(text: string): Promise<number[]> {
 }
 
 export function getEmbeddingDimension(): number {
-  const name = (getSetting('embedding_model') || 'all-MiniLM-L6-v2') as ModelName;
+  const name = (getSetting('embedding_model') || DEFAULT_SETTINGS.EMBEDDING_MODEL) as ModelName;
   return EMBEDDING_MODELS[name]?.dimensions ?? 384;
 }
 

@@ -107,7 +107,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
             <AppLogo size={40} />
             <div>
               <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.5 }}>VaultMind</div>
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Local AI for Legal &amp; Confidential Intelligence</div>
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Private AI · Answers Grounded in Your Sources</div>
             </div>
           </div>
 

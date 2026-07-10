@@ -141,7 +141,7 @@ export default function SettingsModal({ onClose }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <SettingSlider
               label="Temperature"
-              description="Lower = more factual (recommended for legal). Higher = more creative."
+              description="Lower = more factual. Higher = more creative."
               value={parseFloat(settings.llm_temperature || 0.3)}
               min={0} max={1} step={0.1}
               onChange={v => handleSettingChange('llm_temperature', v)}

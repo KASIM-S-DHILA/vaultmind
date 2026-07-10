@@ -5,7 +5,7 @@ describe('shared constants', () => {
   it('DEFAULT_SETTINGS has required keys', () => {
     expect(DEFAULT_SETTINGS.OLLAMA_URL).toBe('http://127.0.0.1:11434');
     expect(DEFAULT_SETTINGS.OLLAMA_MODEL).toBe('phi4:latest');
-    expect(DEFAULT_SETTINGS.EMBEDDING_MODEL).toBe('all-MiniLM-L6-v2');
+    expect(DEFAULT_SETTINGS.EMBEDDING_MODEL).toBe('nomic-embed-text-v1.5');
   });
 
   it('OLLAMA_PRESETS has 5 models', () => {

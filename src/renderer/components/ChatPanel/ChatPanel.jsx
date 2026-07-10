@@ -57,10 +57,10 @@ export default function ChatPanel({
       <div className="chat-messages">
         {isEmpty ? (
           <div className="chat-empty">
-            <div style={{ fontSize: 40, marginBottom: 16 }}>⚖️</div>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
             <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Ask VaultMind</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.7, maxWidth: 360, textAlign: 'center' }}>
-              Upload your documents and ask questions. All answers are grounded in your sources with inline citations.
+              Upload your documents and ask questions. Every answer cites its sources — you can always verify.
             </p>
           </div>
         ) : (

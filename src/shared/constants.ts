@@ -1,7 +1,7 @@
 export const DEFAULT_SETTINGS = {
   OLLAMA_URL: 'http://127.0.0.1:11434',
   OLLAMA_MODEL: 'phi4:latest',
-  EMBEDDING_MODEL: 'all-MiniLM-L6-v2',
+  EMBEDDING_MODEL: 'nomic-embed-text-v1.5',
   LLM_TEMPERATURE: '0.3',
   RETRIEVAL_TOP_K: '5',
   CHUNK_SIZE: '500',
@@ -9,7 +9,7 @@ export const DEFAULT_SETTINGS = {
 } as const;
 
 export const OLLAMA_PRESETS = [
-  { name: 'phi4:latest', display: 'Phi-4 (14B)', desc: 'Microsoft — excellent reasoning, best for legal' },
+  { name: 'phi4:latest', display: 'Phi-4 (14B)', desc: 'Microsoft — excellent reasoning, best for analysis' },
   { name: 'llama3.2:3b', display: 'Llama 3.2 (3B)', desc: 'Meta — lightweight, fast on 8GB RAM' },
   { name: 'qwen2.5:7b', display: 'Qwen 2.5 (7B)', desc: 'Alibaba — strong multilingual support' },
   { name: 'mistral:7b', display: 'Mistral (7B)', desc: 'Mistral AI — fast & efficient' },

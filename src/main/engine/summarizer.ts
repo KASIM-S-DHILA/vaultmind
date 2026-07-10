@@ -4,7 +4,7 @@ import { dbAll } from '../database/sqlite';
 import { logger } from '../../shared/logger';
 import type { NotebookGuide } from '../../shared/types';
 
-const GUIDE_PROMPT = `You are an expert legal analyst. Given the document excerpts below, provide a comprehensive notebook guide.
+const GUIDE_PROMPT = `You are an expert analyst. Given the document excerpts below, provide a comprehensive notebook guide.
 
 Return valid JSON only with this structure:
 {
@@ -57,7 +57,7 @@ export async function generateNotebookGuide(notebookId: string, sourceIds?: stri
   return { overview: fullResponse.slice(0, 300), keyThemes: [], suggestedQuestions: [] };
 }
 
-const SUMMARY_PROMPT = `Summarize the following document text in 2-3 sentences. Focus on the key points for legal analysis.
+const SUMMARY_PROMPT = `Summarize the following document text in 2-3 sentences. Focus on the key points.
 
 Text:
 {text}`;
