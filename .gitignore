@@ -1,0 +1,13 @@
+node_modules/
+dist/
+release/
+models/
+data/
+*.db
+*.db-shm
+*.db-wal
+.env
+.DS_Store
+Thumbs.db
+*.log
+src/renderer/.vite/
