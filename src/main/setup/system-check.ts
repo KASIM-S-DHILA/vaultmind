@@ -13,7 +13,7 @@ export function getSystemInfo(): SystemInfo {
 
   let hasGPU = false;
   try {
-    execSync('nvidia-smi', { stdio: 'pipe', timeout: 2000 });
+    execSync('nvidia-smi', { stdio: 'pipe', timeout: 2000, windowsHide: true });
     hasGPU = true;
   } catch {
     // No GPU or nvidia-smi not available
@@ -22,7 +22,7 @@ export function getSystemInfo(): SystemInfo {
   let ollamaInstalled = false;
   let ollamaVersion: string | null = null;
   try {
-    const out = execSync('ollama --version', { stdio: 'pipe', timeout: 5000, encoding: 'utf-8' });
+    const out = execSync('ollama --version', { stdio: 'pipe', timeout: 5000, encoding: 'utf-8', windowsHide: true });
     ollamaInstalled = true;
     ollamaVersion = out.trim();
   } catch {

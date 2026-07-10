@@ -5,6 +5,7 @@ import StudioPanel from '../components/StudioPanel/StudioPanel';
 import SettingsModal from '../components/shared/SettingsModal';
 import TitleBar from '../components/TitleBar/TitleBar';
 import StatusBar from '../components/StatusBar/StatusBar';
+import OllamaOverlay from '../components/ChatPanel/OllamaOverlay';
 import { useSources } from '../hooks/useSources';
 import { useChat } from '../hooks/useChat';
 import { useNotebook } from '../hooks/useNotebook';
@@ -123,6 +124,7 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
             onCitationClick={setActiveCitation}
             suggestedQuestions={guide?.suggestedQuestions || []}
             modelLoading={modelLoading}
+            ollamaStatus={ollamaStatus}
           />
         </div>
 
@@ -167,6 +169,7 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
       <StatusBar sources={sources} isStreaming={isStreaming} ollamaStatus={ollamaStatus} activeModel={activeModel} />
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      <OllamaOverlay status={ollamaStatus} />
     </div>
   );
 }

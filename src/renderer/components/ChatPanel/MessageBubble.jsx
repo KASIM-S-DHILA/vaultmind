@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import TypingIndicator from './TypingIndicator';
 import './ChatPanel.css';
 
@@ -49,6 +49,7 @@ function renderMarkdown(text) {
 }
 
 export default function MessageBubble({ message, isStreaming, onCitationClick }) {
+  const [copied, setCopied] = useState(false);
   const isUser = message.role === 'user';
   const timestamp = message.created_at
     ? new Date(message.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
@@ -79,6 +80,21 @@ export default function MessageBubble({ message, isStreaming, onCitationClick })
             <span style={{ display: 'inline-block', width: 2, height: 14, background: 'var(--accent)', marginLeft: 2, animation: 'pulse 0.8s ease infinite', verticalAlign: 'text-bottom' }} />
           )}
         </div>
+
+        {/* Copy button */}
+        {message.content && !isStreaming && (
+          <button
+            className="message-copy-btn"
+            onClick={() => {
+              navigator.clipboard.writeText(message.content);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
+            title="Copy to clipboard"
+          >
+            {copied ? '✓ Copied' : '⎘ Copy'}
+          </button>
+        )}
 
         {/* Citations row */}
         {!isUser && message.citations?.length > 0 && (

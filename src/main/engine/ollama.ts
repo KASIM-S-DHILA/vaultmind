@@ -27,7 +27,7 @@ export async function startOllamaServer(): Promise<void> {
   }
 
   logger.info('Ollama', 'Starting server...');
-  ollamaProcess = spawn('ollama', ['serve'], { stdio: 'ignore', detached: true });
+  ollamaProcess = spawn('ollama', ['serve'], { stdio: 'ignore', detached: true, windowsHide: true });
   ollamaProcess.on('error', (err) => {
     logger.warn('Ollama', 'Failed to start server:', err.message);
     ollamaProcess = null;
@@ -66,7 +66,7 @@ export function stopOllamaServer(): void {
 
 export function checkOllamaInstalled(): OllamaCheckResult {
   try {
-    const out = execSync('ollama --version', { stdio: 'pipe', timeout: 5000, encoding: 'utf-8' });
+    const out = execSync('ollama --version', { stdio: 'pipe', timeout: 5000, encoding: 'utf-8', windowsHide: true });
     return { installed: true, version: out.trim() };
   } catch {
     return { installed: false, version: null };
@@ -87,7 +87,7 @@ export async function pullModel(
   onProgress: (progress: { percent: number; status: string; message: string }) => void,
 ): Promise<{ success: boolean; model: string }> {
   return new Promise((resolve, reject) => {
-    const proc = spawn('ollama', ['pull', modelName], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const proc = spawn('ollama', ['pull', modelName], { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 
     proc.stdout.on('data', (data: Buffer) => {
       const lines = data.toString().split('\n').filter(l => l.trim());
@@ -147,7 +147,7 @@ export async function downloadAndInstallOllama(
 
   onProgress({ percent: 80, status: 'installing', message: 'Installing Ollama...' });
   await new Promise<void>((resolve, reject) => {
-    const proc = exec(`"${installerPath}" /verysilent /norestart`, (err) => {
+    const proc = exec(`"${installerPath}" /verysilent /norestart`, { windowsHide: true }, (err) => {
       if (err) reject(err);
       else resolve();
     });

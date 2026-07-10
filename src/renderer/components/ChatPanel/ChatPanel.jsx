@@ -4,7 +4,7 @@ import './ChatPanel.css';
 
 export default function ChatPanel({
   messages, isStreaming, streamingContent, onSend, onClearHistory,
-  onCitationClick, suggestedQuestions, modelLoading,
+  onCitationClick, suggestedQuestions, modelLoading, ollamaStatus,
 }) {
   const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -41,7 +41,18 @@ export default function ChatPanel({
     <div className="chat-panel">
       {/* Header */}
       <div className="chat-header">
-        <span style={{ fontWeight: 600, fontSize: 14 }}>Chat</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>Chat</span>
+          <span
+            className={`ollama-indicator ${ollamaStatus === 'ready' ? 'connected' : ollamaStatus === 'error' ? 'error' : 'connecting'}`}
+            title={
+              ollamaStatus === 'ready' ? 'Ollama connected' :
+              ollamaStatus === 'error' ? 'Ollama error' :
+              ollamaStatus === 'checking' ? 'Checking Ollama...' :
+              'Starting Ollama...'
+            }
+          />
+        </div>
         {messages.length > 0 && (
           <button
             className="btn btn-ghost btn-sm"
