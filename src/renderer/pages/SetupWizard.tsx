@@ -34,6 +34,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
       const running = await window.vaultmind.ollama.checkRunning();
       if (!running) {
         setOllamaProgress({ status: 'starting', percent: 0, message: 'Starting Ollama...' });
+        await window.vaultmind.ollama.startServer();
       }
     }
 

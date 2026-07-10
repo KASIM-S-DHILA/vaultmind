@@ -6,6 +6,7 @@ import {
   pullModel,
   warmupModel,
   downloadAndInstallOllama,
+  startOllamaServer,
 } from '../engine/ollama';
 
 export function registerOllamaHandlers(): void {
@@ -31,5 +32,9 @@ export function registerOllamaHandlers(): void {
     await downloadAndInstallOllama((progress) => {
       event.sender.send(IPC.OLLAMA.DOWNLOAD_PROGRESS, progress);
     });
+  });
+
+  ipcMain.handle(IPC.OLLAMA.START_SERVER, async () => {
+    await startOllamaServer();
   });
 }

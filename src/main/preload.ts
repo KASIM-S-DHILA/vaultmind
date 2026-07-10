@@ -78,6 +78,7 @@ contextBridge.exposeInMainWorld('vaultmind', {
         ipcRenderer.removeListener(IPC.OLLAMA.DOWNLOAD_PROGRESS, listener);
       });
     },
+    startServer: () => ipcRenderer.invoke(IPC.OLLAMA.START_SERVER),
   },
 
   onServerStatus: (cb: (data: unknown) => void) => {

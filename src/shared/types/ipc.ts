@@ -52,6 +52,7 @@ export const IPC = {
     WARMUP: 'ollama:warmup',
     DOWNLOAD_INSTALL: 'ollama:downloadInstall',
     DOWNLOAD_PROGRESS: 'ollama:downloadProgress',
+    START_SERVER: 'ollama:startServer',
   },
   SETUP: {
     IS_COMPLETE: 'setup:isComplete',
