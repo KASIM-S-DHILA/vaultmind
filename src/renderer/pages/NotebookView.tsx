@@ -67,6 +67,30 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
     const cleanup = window.vaultmind.onServerStatus?.((status: any) => {
       setOllamaStatus(status.stage === 'ready' ? 'ready' : status.stage === 'error' ? 'error' : 'starting');
     });
+
+    (async () => {
+      const running = await window.vaultmind.ollama.checkRunning();
+      if (running) {
+        setOllamaStatus('ready');
+        return;
+      }
+      setOllamaStatus('starting');
+      try {
+        await window.vaultmind.ollama.startServer();
+        for (let i = 0; i < 60; i++) {
+          await new Promise(r => setTimeout(r, 1000));
+          const ok = await window.vaultmind.ollama.checkRunning();
+          if (ok) {
+            setOllamaStatus('ready');
+            return;
+          }
+        }
+        setOllamaStatus('error');
+      } catch {
+        setOllamaStatus('error');
+      }
+    })();
+
     return () => cleanup?.();
   }, []);
 
