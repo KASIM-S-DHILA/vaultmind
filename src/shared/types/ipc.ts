@@ -50,6 +50,8 @@ export const IPC = {
     PULL_MODEL: 'ollama:pullModel',
     PULL_PROGRESS: 'ollama:pullProgress',
     WARMUP: 'ollama:warmup',
+    DOWNLOAD_INSTALL: 'ollama:downloadInstall',
+    DOWNLOAD_PROGRESS: 'ollama:downloadProgress',
   },
   SETUP: {
     IS_COMPLETE: 'setup:isComplete',

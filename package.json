@@ -1,7 +1,7 @@
 {
   "name": "vaultmind",
   "version": "1.0.0",
-  "description": "Local AI for Legal & Confidential Intelligence — 100% offline RAG assistant",
+  "description": "Private AI — Source-grounded answers, 100% offline",
   "main": "dist-main/main/index.js",
   "homepage": "./",
   "author": {
@@ -72,8 +72,8 @@
     ],
     "extraResources": [
       {
-        "from": "models",
-        "to": "models",
+        "from": "build/ollama",
+        "to": "ollama",
         "filter": [
           "**/*"
         ]

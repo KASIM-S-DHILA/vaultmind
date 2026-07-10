@@ -1,4 +1,8 @@
-import { spawn, execSync } from 'child_process';
+import { spawn, execSync, exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { app } from 'electron';
+import { downloadFile } from '../setup/model-downloader';
 import { getSetting } from '../database/settings';
 import { logger } from '../../shared/logger';
 import { OLLAMA_POLL_INTERVAL, OLLAMA_STARTUP_TIMEOUT } from '../../shared/constants';
@@ -126,6 +130,35 @@ export async function listOllamaModels(): Promise<OllamaModelInfo[]> {
     logger.warn('Ollama', 'Failed to connect to server:', (err as Error).message);
     return [];
   }
+}
+
+const OLLAMA_DOWNLOAD_URL = 'https://ollama.com/download/OllamaSetup.exe';
+
+export async function downloadAndInstallOllama(
+  onProgress: (progress: { percent: number; status: string; message: string }) => void,
+): Promise<void> {
+  const destDir = path.join(app.getPath('temp'), 'vaultmind-ollama');
+  const installerPath = path.join(destDir, 'OllamaSetup.exe');
+
+  onProgress({ percent: 0, status: 'downloading', message: 'Downloading Ollama...' });
+  await downloadFile(OLLAMA_DOWNLOAD_URL, installerPath, (p) => {
+    onProgress({ percent: Math.floor(p.percent * 0.8), status: 'downloading', message: `Downloading Ollama... ${p.percent}%` });
+  });
+
+  onProgress({ percent: 80, status: 'installing', message: 'Installing Ollama...' });
+  await new Promise<void>((resolve, reject) => {
+    const proc = exec(`"${installerPath}" /verysilent /norestart`, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+    proc.on('error', reject);
+  });
+
+  onProgress({ percent: 90, status: 'starting', message: 'Starting Ollama server...' });
+  await startOllamaServer();
+  const ready = await waitForOllamaReady(30000);
+  if (!ready) throw new Error('Ollama server did not start');
+  onProgress({ percent: 100, status: 'done', message: 'Ollama ready!' });
 }
 
 export async function warmupModel(modelName: string): Promise<void> {

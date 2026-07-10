@@ -71,6 +71,13 @@ contextBridge.exposeInMainWorld('vaultmind', {
       });
     },
     warmupModel: (modelName: string) => ipcRenderer.invoke(IPC.OLLAMA.WARMUP, modelName),
+    downloadAndInstall: (onProgress: (data: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, data: unknown) => onProgress(data);
+      ipcRenderer.on(IPC.OLLAMA.DOWNLOAD_PROGRESS, listener);
+      return ipcRenderer.invoke(IPC.OLLAMA.DOWNLOAD_INSTALL).finally(() => {
+        ipcRenderer.removeListener(IPC.OLLAMA.DOWNLOAD_PROGRESS, listener);
+      });
+    },
   },
 
   onServerStatus: (cb: (data: unknown) => void) => {

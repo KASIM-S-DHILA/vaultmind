@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { AppLogo } from '../App';
 import WelcomeStep from '../components/wizard/WelcomeStep';
-import SystemStep from '../components/wizard/SystemStep';
 import OllamaStep from '../components/wizard/OllamaStep';
 import ReadyStep from '../components/wizard/ReadyStep';
 
 const STEPS = [
   { id: 'welcome', label: 'Welcome' },
-  { id: 'system', label: 'System Check' },
-  { id: 'llm', label: 'Ollama Model' },
+  { id: 'setup', label: 'Setup' },
   { id: 'ready', label: 'Ready!' },
 ];
 
@@ -18,58 +16,48 @@ interface SetupWizardProps {
 
 export default function SetupWizard({ onComplete }: SetupWizardProps) {
   const [step, setStep] = useState(0);
-  const [sysInfo, setSysInfo] = useState<Record<string, unknown> | null>(null);
-  const [ollamaStatus, setOllamaStatus] = useState({ installed: null as boolean | null, running: false, checking: true, version: '' });
   const [ollamaPull, setOllamaPull] = useState({ status: 'idle', percent: 0, message: '' });
-  const [ollamaModels, setOllamaModels] = useState<Array<{ name: string }>>([]);
-  const [selectedModel, setSelectedModel] = useState('phi4:latest');
-  const [skipOllama, setSkipOllama] = useState(false);
+  const [ollamaProgress, setOllamaProgress] = useState({ status: 'idle', percent: 0, message: '' });
+  const [selectedModel] = useState('gemma3:4b');
 
-  useEffect(() => {
-    if (step === 1) {
-      window.vaultmind.setup.getSystemInfo().then((info: unknown) => setSysInfo(info as Record<string, unknown>));
-    }
-    if (step === 2) {
-      checkOllama();
-    }
-  }, [step]);
+  async function runSetup() {
+    setStep(1);
+    setOllamaProgress({ status: 'checking', percent: 0, message: 'Checking Ollama...' });
 
-  async function checkOllama() {
-    setOllamaStatus(s => ({ ...s, checking: true }));
     const inst = await window.vaultmind.ollama.checkInstalled();
-    const running = inst.installed ? await window.vaultmind.ollama.checkRunning() : false;
-    setOllamaStatus({ installed: inst.installed, version: inst.version || '', running, checking: false });
-    if (running) {
-      try {
-        const models = await window.vaultmind.settings.listOllamaModels();
-        setOllamaModels(models as Array<{ name: string }> || []);
-      } catch { /* ignore */ }
+    if (!inst.installed) {
+      setOllamaProgress({ status: 'downloading', percent: 0, message: 'Downloading Ollama...' });
+      await window.vaultmind.ollama.downloadAndInstall((p: any) => {
+        setOllamaProgress({ status: p.status, percent: p.percent, message: p.message });
+      });
+    } else {
+      const running = await window.vaultmind.ollama.checkRunning();
+      if (!running) {
+        setOllamaProgress({ status: 'starting', percent: 0, message: 'Starting Ollama...' });
+      }
     }
-  }
 
-  async function pullOllamaModel() {
     setOllamaPull({ status: 'pulling', percent: 0, message: `Pulling ${selectedModel}...` });
     try {
       await window.vaultmind.ollama.pullModel(selectedModel, (p: any) => {
         setOllamaPull({ status: 'pulling', percent: p.percent, message: p.message || `Pulling ${selectedModel}...` });
       });
       setOllamaPull({ status: 'done', percent: 100, message: `${selectedModel} ready!` });
-      const models = await window.vaultmind.settings.listOllamaModels();
-      setOllamaModels((models as Array<{ name: string }>) || []);
     } catch (e) {
       setOllamaPull({ status: 'error', percent: 0, message: (e as Error).message });
     }
+
+    setStep(2);
   }
+
+  useEffect(() => {
+    runSetup();
+  }, []);
 
   async function finish() {
     await window.vaultmind.settings.update('ollama_model', selectedModel);
     await window.vaultmind.setup.complete();
     onComplete();
-  }
-
-  function canProceed() {
-    if (step === 2) return ollamaPull.status === 'done' || skipOllama || (ollamaStatus.installed === false && !ollamaStatus.checking);
-    return true;
   }
 
   return (
@@ -128,29 +116,19 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
 
           <div className="animate-fade-in" key={step}>
             {step === 0 && <WelcomeStep />}
-            {step === 1 && <SystemStep sysInfo={sysInfo} />}
-            {step === 2 && (
+            {step === 1 && (
               <OllamaStep
-                status={ollamaStatus as any}
+                ollamaProgress={ollamaProgress}
                 pull={ollamaPull}
-                onPull={pullOllamaModel}
-                models={ollamaModels}
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-                onRefresh={checkOllama}
-                skip={skipOllama}
-                onSkip={setSkipOllama}
               />
             )}
-            {step === 3 && <ReadyStep />}
+            {step === 2 && <ReadyStep />}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32 }}>
-            <button className="btn btn-ghost" onClick={() => setStep(s => s - 1)} style={{ visibility: step === 0 ? 'hidden' : 'visible' }}>
-              ← Back
-            </button>
-            <button className="btn btn-primary" disabled={!canProceed()} onClick={() => step === 4 ? finish() : setStep(s => s + 1)}>
-              {step === 4 ? '🚀 Launch VaultMind' : 'Continue →'}
+            <div />
+            <button className="btn btn-primary" disabled={step < 2} onClick={finish}>
+              🚀 Launch VaultMind
             </button>
           </div>
         </div>

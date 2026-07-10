@@ -4,13 +4,13 @@ import { DEFAULT_SETTINGS, OLLAMA_PRESETS, EMBEDDING_MODELS, IPC } from '../shar
 describe('shared constants', () => {
   it('DEFAULT_SETTINGS has required keys', () => {
     expect(DEFAULT_SETTINGS.OLLAMA_URL).toBe('http://127.0.0.1:11434');
-    expect(DEFAULT_SETTINGS.OLLAMA_MODEL).toBe('phi4:latest');
+    expect(DEFAULT_SETTINGS.OLLAMA_MODEL).toBe('gemma3:4b');
     expect(DEFAULT_SETTINGS.EMBEDDING_MODEL).toBe('nomic-embed-text-v1.5');
   });
 
-  it('OLLAMA_PRESETS has 5 models', () => {
-    expect(OLLAMA_PRESETS).toHaveLength(5);
-    expect(OLLAMA_PRESETS[0].name).toBe('phi4:latest');
+  it('OLLAMA_PRESETS has 6 models', () => {
+    expect(OLLAMA_PRESETS).toHaveLength(6);
+    expect(OLLAMA_PRESETS[0].name).toBe('gemma3:4b');
   });
 
   it('EMBEDDING_MODELS has correct dimensions', () => {

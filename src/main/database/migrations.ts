@@ -61,7 +61,7 @@ const MIGRATIONS: Migration[] = [
       `);
 
       const defaults: [string, string][] = [
-        ['ollama_model', 'phi4:latest'],
+        ['ollama_model', 'gemma3:4b'],
         ['ollama_url', 'http://127.0.0.1:11434'],
         ['embedding_model', 'nomic-embed-text-v1.5'],
         ['llm_context_size', '4096'],
