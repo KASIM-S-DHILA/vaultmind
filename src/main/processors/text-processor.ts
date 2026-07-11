@@ -8,7 +8,14 @@ interface PageData {
 
 export async function processText(filePath: string): Promise<PageData[]> {
   const ext = path.extname(filePath).toLowerCase();
-  let content = fs.readFileSync(filePath, 'utf-8');
+  const raw = fs.readFileSync(filePath);
+  // Detect binary files (files with null bytes or high proportion of non-text bytes)
+  const nullByteCount = raw.filter(b => b === 0).length;
+  const nonAsciiCount = raw.filter(b => b > 127 && b < 32 && b !== 9 && b !== 10 && b !== 13).length;
+  if (nullByteCount > 0 || nonAsciiCount > raw.length * 0.1) {
+    throw new Error(`Cannot read "${path.basename(filePath)}" — this file appears to be a binary/image file, not a text document. Supported formats: PDF, TXT, MD, CSV.`);
+  }
+  let content = raw.toString('utf-8');
 
   if (ext === '.md') {
     content = content

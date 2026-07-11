@@ -6,6 +6,7 @@ export interface Settings {
   retrieval_top_k: string;
   chunk_size: string;
   chunk_overlap: string;
+  system_prompt: string;
 }
 
 export interface DownloadProgress {

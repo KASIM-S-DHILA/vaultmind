@@ -26,8 +26,10 @@ export function registerOllamaHandlers(): void {
     });
   });
 
-  ipcMain.handle(IPC.OLLAMA.WARMUP, async (_event, modelName: string) => {
-    await warmupModel(modelName);
+  ipcMain.handle(IPC.OLLAMA.WARMUP, async (event, modelName: string) => {
+    await warmupModel(modelName, (progress) => {
+      event.sender.send(IPC.OLLAMA.WARMUP_PROGRESS, progress);
+    });
   });
 
   ipcMain.handle(IPC.OLLAMA.DOWNLOAD_INSTALL, async (event) => {

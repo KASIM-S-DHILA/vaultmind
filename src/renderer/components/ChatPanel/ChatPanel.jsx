@@ -3,8 +3,9 @@ import MessageBubble from './MessageBubble';
 import './ChatPanel.css';
 
 export default function ChatPanel({
-  messages, isStreaming, streamingContent, onSend, onClearHistory,
-  onCitationClick, suggestedQuestions, modelLoading, ollamaStatus,
+  messages, isStreaming, streamingContent, onSend, onStop, onClearHistory,
+  onCitationClick, suggestedQuestions, modelLoading, modelLoadingMsg, ollamaStatus,
+  webSearchEnabled, onWebSearchToggle,
 }) {
   const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -118,11 +119,23 @@ export default function ChatPanel({
       )}
 
       {/* Model loading bar */}
-      {modelLoading && <div className="model-loading-bar"><div className="model-loading-bar-inner" /></div>}
+      {modelLoading && (
+        <div className="model-loading-bar">
+          <div className="model-loading-bar-inner" />
+          {modelLoadingMsg && <div className="model-loading-msg">{modelLoadingMsg}</div>}
+        </div>
+      )}
 
       {/* Input area */}
       <div className="chat-input-area">
         <div className="chat-input-row">
+          <button
+            className={`chat-web-btn ${webSearchEnabled ? 'active' : ''}`}
+            onClick={onWebSearchToggle}
+            title={webSearchEnabled ? 'Web search on — results will be included' : 'Web search off'}
+          >
+            🌐
+          </button>
           <textarea
             ref={inputRef}
             className="chat-textarea"
@@ -134,16 +147,26 @@ export default function ChatPanel({
             disabled={isStreaming}
             style={{ resize: 'none' }}
           />
-          <button
-            className="chat-send-btn"
-            onClick={handleSend}
-            disabled={!input.trim() || isStreaming}
-          >
-            {isStreaming ? <div className="spinner spinner-sm" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: 'white' }} /> : '↑'}
-          </button>
+          {isStreaming ? (
+            <button
+              className="chat-stop-btn"
+              onClick={onStop}
+              title="Stop generating"
+            >
+              ■
+            </button>
+          ) : (
+            <button
+              className="chat-send-btn"
+              onClick={handleSend}
+              disabled={!input.trim()}
+            >
+              ↑
+            </button>
+          )}
         </div>
         <div className="chat-input-hint">
-          Press Enter to send · Shift+Enter for new line · Answers are grounded in your sources
+          Press Enter to send · Shift+Enter for new line · {webSearchEnabled ? '🌐 Web search enabled' : 'Answers grounded in your sources'}
         </div>
       </div>
     </div>

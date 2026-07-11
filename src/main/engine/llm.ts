@@ -5,6 +5,7 @@ interface GenerateOptions {
   systemPrompt: string;
   userMessage: string;
   onToken: (token: string) => void;
+  signal?: AbortSignal;
 }
 
 export async function generateStream(options: GenerateOptions): Promise<string> {

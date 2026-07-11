@@ -24,44 +24,44 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
   const [title, setTitle] = useState(notebook.title);
   const [activeModel, setActiveModel] = useState('');
   const [modelLoading, setModelLoading] = useState(false);
+  const [modelLoadingMsg, setModelLoadingMsg] = useState('');
   const [ollamaStatus, setOllamaStatus] = useState('checking');
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
   const { sources, loading: sourcesLoading, uploadFiles, deleteSource, setSourceActive } = useSources(notebook.id);
-  const { messages, isStreaming, streamingContent, sendMessage, clearHistory } = useChat(notebook.id);
+  const { messages, isStreaming, streamingContent, sendMessage, stopGeneration, clearHistory } = useChat(notebook.id);
   const { guide, guideLoading, notes, saveNotes, refreshGuide } = useNotebook(notebook.id);
 
   const activeSourceIds = sources.filter(s => s.active !== 0).map(s => s.id);
-  const handleSend = (text: string) => sendMessage(text, activeSourceIds);
+  const handleSend = (text: string) => sendMessage(text, activeSourceIds, webSearchEnabled);
 
   function handleRefreshGuide() {
     refreshGuide(activeSourceIds.length > 0 ? activeSourceIds : undefined);
   }
 
-  const prevShowSettings = useRef(showSettings);
   const prevActiveModel = useRef(activeModel);
   useEffect(() => {
     window.vaultmind.settings.get().then(s => {
-      setActiveModel(s.ollama_model || 'phi4:latest');
+      const m = s.ollama_model || 'phi4:latest';
+      setActiveModel(m);
+      prevActiveModel.current = m;
     });
   }, []);
 
-  useEffect(() => {
-    if (prevShowSettings.current && !showSettings) {
-      window.vaultmind.settings.get().then(async s => {
-        const newModel = s.ollama_model || 'phi4:latest';
-        if (newModel !== prevActiveModel.current) {
-          setModelLoading(true);
-          try {
-            await window.vaultmind.ollama.warmupModel(newModel);
-          } catch {}
-          setModelLoading(false);
-        }
-        setActiveModel(newModel);
-        prevActiveModel.current = newModel;
+  async function handleModelChange(newModel: string) {
+    if (newModel === prevActiveModel.current) return;
+    setModelLoading(true);
+    setModelLoadingMsg(`Loading ${newModel}...`);
+    try {
+      await window.vaultmind.ollama.warmupModel(newModel, (progress) => {
+        setModelLoadingMsg(progress.message || `Loading ${newModel}...`);
       });
-    }
-    prevShowSettings.current = showSettings;
-  }, [showSettings]);
+    } catch {}
+    setModelLoading(false);
+    setModelLoadingMsg('');
+    setActiveModel(newModel);
+    prevActiveModel.current = newModel;
+  }
 
   useEffect(() => {
     const cleanup = window.vaultmind.onServerStatus?.((status: any) => {
@@ -144,11 +144,15 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
             isStreaming={isStreaming}
             streamingContent={streamingContent}
             onSend={handleSend}
+            onStop={stopGeneration}
             onClearHistory={clearHistory}
             onCitationClick={setActiveCitation}
             suggestedQuestions={guide?.suggestedQuestions || []}
             modelLoading={modelLoading}
+            modelLoadingMsg={modelLoadingMsg}
             ollamaStatus={ollamaStatus}
+            webSearchEnabled={webSearchEnabled}
+            onWebSearchToggle={() => setWebSearchEnabled(v => !v)}
           />
         </div>
 
@@ -192,7 +196,7 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
 
       <StatusBar sources={sources} isStreaming={isStreaming} ollamaStatus={ollamaStatus} activeModel={activeModel} />
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onModelChange={handleModelChange} />}
       <OllamaOverlay status={ollamaStatus} />
     </div>
   );

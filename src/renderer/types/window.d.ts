@@ -24,7 +24,8 @@ interface VaultMindAPI {
     onProgress: (cb: (data: UploadProgress) => void) => () => void;
   };
   chat: {
-    send: (notebookId: string, message: string, onToken: (token: string) => void, activeSourceIds?: string[]) => Promise<{ id: string; content: string; citations: Citation[] }>;
+    send: (notebookId: string, message: string, onToken: (token: string) => void, activeSourceIds?: string[], webSearch?: boolean) => Promise<{ id: string; content: string; citations: Citation[] }>;
+    stop: (notebookId: string) => Promise<{ success: boolean }>;
     getHistory: (notebookId: string) => Promise<Message[]>;
     clearHistory: (notebookId: string) => Promise<{ success: boolean }>;
   };
@@ -43,7 +44,7 @@ interface VaultMindAPI {
     checkInstalled: () => Promise<{ installed: boolean; version: string | null }>;
     checkRunning: () => Promise<boolean>;
     pullModel: (modelName: string, onProgress: (data: unknown) => void) => Promise<{ success: boolean; model: string }>;
-    warmupModel: (modelName: string) => Promise<void>;
+    warmupModel: (modelName: string, onProgress?: (data: { percent: number; status: string; message: string }) => void) => Promise<void>;
     downloadAndInstall: (onProgress: (data: { percent: number; status: string; message: string }) => void) => Promise<void>;
     startServer: () => Promise<void>;
     setAutoStart: (enabled: boolean) => Promise<{ success: boolean }>;

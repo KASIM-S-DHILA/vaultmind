@@ -29,6 +29,7 @@ export const IPC = {
     HISTORY: 'chat:history',
     CLEAR: 'chat:clear',
     TOKEN: 'chat:token',
+    STOP: 'chat:stop',
   },
   NOTES: {
     GET: 'notes:get',
@@ -50,6 +51,7 @@ export const IPC = {
     PULL_MODEL: 'ollama:pullModel',
     PULL_PROGRESS: 'ollama:pullProgress',
     WARMUP: 'ollama:warmup',
+    WARMUP_PROGRESS: 'ollama:warmupProgress',
     DOWNLOAD_INSTALL: 'ollama:downloadInstall',
     DOWNLOAD_PROGRESS: 'ollama:downloadProgress',
     START_SERVER: 'ollama:startServer',
@@ -67,6 +69,9 @@ export const IPC = {
   },
   SERVER: {
     STATUS: 'server:status',
+  },
+  WEB_SEARCH: {
+    SEARCH: 'web-search:search',
   },
   EXTERNAL: {
     OPEN: 'open-external',

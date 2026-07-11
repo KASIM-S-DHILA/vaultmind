@@ -27,7 +27,7 @@ export function useChat(notebookId: string) {
     }
   }
 
-  async function sendMessage(text: string, activeSourceIds?: string[]) {
+  async function sendMessage(text: string, activeSourceIds?: string[], webSearch?: boolean) {
     if (!text.trim() || isStreaming) return;
 
     const userMsg: Message = { id: String(Date.now()), notebook_id: notebookId, role: 'user', content: text, citations_json: null, created_at: Date.now() };
@@ -42,7 +42,7 @@ export function useChat(notebookId: string) {
       const result: ChatResult = await window.vaultmind.chat.send(notebookId, text, (token) => {
         accumulated += token;
         setStreamingContent(accumulated);
-      }, activeSourceIds);
+      }, activeSourceIds, webSearch);
 
       setMessages(prev => [...prev, {
         id: result.id,
@@ -71,10 +71,15 @@ export function useChat(notebookId: string) {
     }
   }
 
+  async function stopGeneration() {
+    await window.vaultmind.chat.stop(notebookId);
+    setIsStreaming(false);
+  }
+
   async function clearHistory() {
     await window.vaultmind.chat.clearHistory(notebookId);
     setMessages([]);
   }
 
-  return { messages, isStreaming, streamingContent, sendMessage, clearHistory, error };
+  return { messages, isStreaming, streamingContent, sendMessage, stopGeneration, clearHistory, error };
 }

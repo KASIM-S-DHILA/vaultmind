@@ -29,7 +29,12 @@ export async function startOllamaServer(): Promise<void> {
   }
 
   logger.info('Ollama', 'Starting server...');
-  ollamaProcess = spawn('ollama', ['serve'], { stdio: 'ignore', detached: true, windowsHide: true });
+  ollamaProcess = spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-NonInteractive', '-Command', 'ollama serve'], {
+    stdio: 'ignore',
+    windowsHide: true,
+    detached: true,
+  });
+  ollamaProcess.unref();
   ollamaProcess.on('error', (err) => {
     logger.warn('Ollama', 'Failed to start server:', err.message);
     ollamaProcess = null;
@@ -149,11 +154,16 @@ export async function downloadAndInstallOllama(
 
   onProgress({ percent: 80, status: 'installing', message: 'Installing Ollama...' });
   await new Promise<void>((resolve, reject) => {
-    const proc = exec(`"${installerPath}" /verysilent /norestart`, { windowsHide: true }, (err) => {
-      if (err) reject(err);
-      else resolve();
+    const proc = spawn(`"${installerPath}"`, ['/verysilent', '/norestart'], {
+      stdio: 'ignore',
+      windowsHide: true,
+      shell: true,
     });
     proc.on('error', reject);
+    proc.on('exit', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Installer exited with code ${code}`));
+    });
   });
 
   onProgress({ percent: 90, status: 'starting', message: 'Starting Ollama server...' });
@@ -163,7 +173,10 @@ export async function downloadAndInstallOllama(
   onProgress({ percent: 100, status: 'done', message: 'Ollama ready!' });
 }
 
-export async function warmupModel(modelName: string): Promise<void> {
+export async function warmupModel(
+  modelName: string,
+  onProgress?: (progress: { percent: number; status: string; message: string }) => void,
+): Promise<void> {
   const baseUrl = await getOllamaUrl();
   const res = await fetch(baseUrl + '/api/chat', {
     method: 'POST',
@@ -171,11 +184,48 @@ export async function warmupModel(modelName: string): Promise<void> {
     body: JSON.stringify({
       model: modelName,
       messages: [{ role: 'user', content: 'hi' }],
-      stream: false,
+      stream: true,
     }),
   });
   if (!res.ok) {
     throw new Error(`Model warmup failed: ${res.status}`);
+  }
+
+  onProgress?.({ percent: 0, status: 'loading', message: `Loading ${modelName}...` });
+
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let loaded = false;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const parsed = JSON.parse(line);
+          if (parsed.status === 'success' || parsed.done === true) {
+            loaded = true;
+          }
+          if (parsed.status === 'loading' && parsed.msg) {
+            onProgress?.({ percent: 50, status: 'loading', message: parsed.msg });
+          }
+        } catch {
+          // Skip malformed JSON lines
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (loaded) {
+    onProgress?.({ percent: 100, status: 'done', message: `${modelName} ready` });
   }
 }
 
@@ -199,7 +249,7 @@ export function setOllamaAutoStart(enabled: boolean): boolean {
       const exePath = findOllamaExePath();
       if (!exePath) return false;
       const psScript = `$ws=New-Object -ComObject WScript.Shell;$s=$ws.CreateShortcut('${shortcutPath.replace(/'/g, "''")}');$s.TargetPath='${exePath.replace(/'/g, "''")}';$s.Arguments='serve';$s.WorkingDirectory='${path.dirname(exePath).replace(/'/g, "''")}';$s.Description='Ollama AI server (started by VaultMind)';$s.WindowStyle=7;$s.Save()`;
-      execSync(psScript, { stdio: 'pipe', timeout: 10000, windowsHide: true, shell: 'powershell' });
+      execSync(`powershell -WindowStyle Hidden -NoProfile -NonInteractive -Command "${psScript.replace(/"/g, '\\"')}"`, { stdio: 'pipe', timeout: 10000, windowsHide: true });
     } else {
       if (fs.existsSync(shortcutPath)) fs.unlinkSync(shortcutPath);
     }
@@ -219,13 +269,16 @@ export async function generateOllamaStream(options: {
   systemPrompt: string;
   userMessage: string;
   onToken: (token: string) => void;
+  signal?: AbortSignal;
 }): Promise<string> {
-  const { systemPrompt, userMessage, onToken } = options;
+  const { systemPrompt, userMessage, onToken, signal } = options;
   const baseUrl = await getOllamaUrl();
   const model = getSetting('ollama_model') || 'phi4:latest';
   const temperature = parseFloat(getSetting('llm_temperature') || '0.3');
 
   logger.info('Ollama', `Generating stream with model: ${model} on ${baseUrl}`);
+
+  const contextSize = parseInt(getSetting('llm_context_size') || '4096', 10);
 
   const res = await fetch(baseUrl + '/api/chat', {
     method: 'POST',
@@ -237,8 +290,9 @@ export async function generateOllamaStream(options: {
         { role: 'user', content: userMessage },
       ],
       stream: true,
-      options: { temperature },
+      options: { temperature, num_ctx: contextSize },
     }),
+    signal,
   });
 
   if (!res.ok) {
@@ -252,6 +306,11 @@ export async function generateOllamaStream(options: {
 
   try {
     while (true) {
+      if (signal?.aborted) {
+        const err = new Error('The operation was aborted');
+        err.name = 'AbortError';
+        throw err;
+      }
       const { done, value } = await reader.read();
       if (done) break;
 
@@ -277,4 +336,33 @@ export async function generateOllamaStream(options: {
   }
 
   return buffer;
+}
+
+export async function generateSearchQuery(userMessage: string): Promise<string> {
+  const baseUrl = await getOllamaUrl();
+  const model = getSetting('ollama_model') || 'phi4:latest';
+
+  const res = await fetch(baseUrl + '/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: 'You are a search query optimizer. Given a user question, generate a concise, keyword-focused web search query (5-15 words). Return ONLY the query — no explanation, no prefixes.' },
+        { role: 'user', content: userMessage },
+      ],
+      stream: false,
+      options: { temperature: 0.1 },
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Search query generation failed: ${res.status} ${errText.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const query = (data.message?.content || userMessage).replace(/["']/g, '').trim();
+  logger.info('Ollama', `Generated search query: "${query}" (from: "${userMessage.slice(0, 60)}")`);
+  return query || userMessage;
 }

@@ -36,13 +36,14 @@ contextBridge.exposeInMainWorld('vaultmind', {
   },
 
   chat: {
-    send: (notebookId: string, message: string, onToken: (token: string) => void, activeSourceIds?: string[]) => {
+    send: (notebookId: string, message: string, onToken: (token: string) => void, activeSourceIds?: string[], webSearch?: boolean) => {
       const listener = (_event: Electron.IpcRendererEvent, token: string) => onToken(token);
       ipcRenderer.on(IPC.CHAT.TOKEN, listener);
-      return ipcRenderer.invoke(IPC.CHAT.SEND, notebookId, message, activeSourceIds).finally(() => {
+      return ipcRenderer.invoke(IPC.CHAT.SEND, notebookId, message, activeSourceIds, webSearch).finally(() => {
         ipcRenderer.removeListener(IPC.CHAT.TOKEN, listener);
       });
     },
+    stop: (notebookId: string) => ipcRenderer.invoke(IPC.CHAT.STOP, notebookId),
     getHistory: (notebookId: string) => ipcRenderer.invoke(IPC.CHAT.HISTORY, notebookId),
     clearHistory: (notebookId: string) => ipcRenderer.invoke(IPC.CHAT.CLEAR, notebookId),
   },
@@ -70,7 +71,13 @@ contextBridge.exposeInMainWorld('vaultmind', {
         ipcRenderer.removeListener(IPC.OLLAMA.PULL_PROGRESS, listener);
       });
     },
-    warmupModel: (modelName: string) => ipcRenderer.invoke(IPC.OLLAMA.WARMUP, modelName),
+    warmupModel: (modelName: string, onProgress?: (data: { percent: number; status: string; message: string }) => void) => {
+      const listener = onProgress ? (_event: Electron.IpcRendererEvent, data: { percent: number; status: string; message: string }) => onProgress(data) : null;
+      if (listener) ipcRenderer.on(IPC.OLLAMA.WARMUP_PROGRESS, listener);
+      return ipcRenderer.invoke(IPC.OLLAMA.WARMUP, modelName).finally(() => {
+        if (listener) ipcRenderer.removeListener(IPC.OLLAMA.WARMUP_PROGRESS, listener);
+      });
+    },
     downloadAndInstall: (onProgress: (data: unknown) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, data: unknown) => onProgress(data);
       ipcRenderer.on(IPC.OLLAMA.DOWNLOAD_PROGRESS, listener);
