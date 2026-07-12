@@ -61,14 +61,16 @@ app.whenReady().then(async () => {
   broadcastStatus('ollama', 50, 'Starting Ollama AI server...');
   startOllamaServer().catch(err => logger.warn('Main', 'Ollama start warning:', err.message));
 
-  const ollamaReady = await waitForOllamaReady(30000);
-  if (ollamaReady) {
-    broadcastStatus('ready', 100, 'Ollama AI ready!');
-  } else {
-    broadcastStatus('warning', 80, 'Ollama starting — may need a moment');
-  }
-
+  // Don't block UI — create main window immediately, poll ollama in background
   mainWindow = createMainWindow(splashWindow);
+  (async () => {
+    const ready = await waitForOllamaReady(30000);
+    if (ready) {
+      broadcastStatus('ready', 100, 'Ollama AI ready!');
+    } else {
+      broadcastStatus('warning', 80, 'Ollama starting — may need a moment');
+    }
+  })();
   createTray(mainWindow);
 
   app.on('activate', () => {
