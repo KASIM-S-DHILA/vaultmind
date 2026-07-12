@@ -423,11 +423,6 @@
 .session-item-actions {
   display: flex;
   gap: 2px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-.session-item:hover .session-item-actions {
-  opacity: 1;
 }
 
 .btn-icon {

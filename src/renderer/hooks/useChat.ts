@@ -16,12 +16,11 @@ export function useChat(notebookId: string, sessionId?: string) {
   useEffect(() => {
     if (!notebookId) return;
     loadHistory();
-  }, [notebookId]);
+  }, [notebookId, sessionId]);
 
   async function loadHistory() {
     try {
-      // Always load messages for the notebook (not scoped to sessionId)
-      const history = await window.vaultmind.chat.getHistory(notebookId);
+      const history = await window.vaultmind.chat.getHistory(notebookId, sessionId);
       setMessages(history);
     } catch (e) {
       setError((e as Error).message);

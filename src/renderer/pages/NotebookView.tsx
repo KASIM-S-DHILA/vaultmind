@@ -63,7 +63,8 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
   }, [notebook.id]);
 
   async function handleNewSession() {
-    await window.vaultmind.sessions.create(notebook.id, 'New Chat');
+    const session = await window.vaultmind.sessions.create(notebook.id, 'New Chat');
+    if (session) setCurrentSessionId(session.id);
     await loadSessions();
   }
 
