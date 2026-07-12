@@ -1,3 +1,9 @@
+/**
+ * Splash window shown during app startup.
+ *
+ * It is always-on-top, transparent, and frameless. Closed once the main
+ * window fires `ready-to-show`.
+ */
 import { BrowserWindow } from 'electron';
 import path from 'path';
 

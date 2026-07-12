@@ -1,21 +1,14 @@
 import { searchSimilar } from './vector-store';
 import { generateStream } from './llm';
+import { GUIDE_PROMPT, SUMMARY_PROMPT } from './prompts';
 import { dbAll } from '../database/sqlite';
 import { logger } from '../../shared/logger';
 import type { NotebookGuide } from '../../shared/types';
 
-const GUIDE_PROMPT = `You are an expert analyst. Given the document excerpts below, provide a comprehensive notebook guide.
-
-Return valid JSON only with this structure:
-{
-  "overview": "2-3 sentence overview of what the documents cover",
-  "keyThemes": ["Theme 1", "Theme 2", "Theme 3"],
-  "suggestedQuestions": ["Question 1?", "Question 2?", "Question 3?", "Question 4?"]
-}
-
-Document excerpts:
-{context}`;
-
+/**
+ * Generates a notebook guide (overview, key themes, suggested questions)
+ * by retrieving the most relevant chunks and asking the LLM to summarise them.
+ */
 export async function generateNotebookGuide(notebookId: string, sourceIds?: string[]): Promise<NotebookGuide> {
   if (!sourceIds) {
     const sourceRows = dbAll<{ id: string }>('SELECT id FROM sources WHERE notebook_id = ? AND status = ?', [notebookId, 'ready']);
@@ -57,11 +50,10 @@ export async function generateNotebookGuide(notebookId: string, sourceIds?: stri
   return { overview: fullResponse.slice(0, 300), keyThemes: [], suggestedQuestions: [] };
 }
 
-const SUMMARY_PROMPT = `Summarize the following document text in 2-3 sentences. Focus on the key points.
-
-Text:
-{text}`;
-
+/**
+ * Generates a 2-3 sentence summary for a single source document.
+ * Falls back to a text prefix if the LLM call fails.
+ */
 export async function generateSourceSummary(sourceId: string, text: string): Promise<string> {
   if (!text || text.length < 50) return text?.slice(0, 200) ?? '';
 

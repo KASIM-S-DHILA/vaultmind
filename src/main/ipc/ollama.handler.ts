@@ -1,3 +1,7 @@
+/**
+ * Ollama IPC: check installation status, start/stop the server, pull and
+ * warm up models, and manage Windows auto-start shortcut.
+ */
 import { ipcMain } from 'electron';
 import { IPC } from '../../shared/constants';
 import {

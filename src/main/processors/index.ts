@@ -1,3 +1,11 @@
+/**
+ * File processing pipeline: select the right extractor (PDF vs text),
+ * split pages into chunks, generate an LLM summary, embed and store
+ * chunks in the vector store, and emit progress events.
+ *
+ * Supported types are defined in `SUPPORTED_TYPES` and must also be
+ * listed in the renderer's file-dialog filter.
+ */
 import path from 'path';
 import { stat } from 'fs/promises';
 import { processPDF } from './pdf-processor';

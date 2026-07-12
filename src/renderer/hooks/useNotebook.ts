@@ -1,3 +1,7 @@
+/**
+ * Notebook hook: loads and refreshes the notebook guide (overview, themes,
+ * suggested questions) and manages free-form notes.
+ */
 import { useState, useEffect } from 'react';
 import type { NotebookGuide } from '../../shared/types';
 

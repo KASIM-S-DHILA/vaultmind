@@ -1,3 +1,11 @@
+/**
+ * Chat IPC: send messages, stream tokens back to the renderer, stop
+ * in-flight generation, retrieve/clear/export history.
+ *
+ * Active streams are tracked in a `Map<streamKey, AbortController>` so
+ * that a stop request can cancel an ongoing LLM call. When the stream ends
+ * the complete response (including citations) is persisted to the database.
+ */
 import { ipcMain, dialog } from 'electron';
 import { IPC } from '../../shared/constants';
 import { streamChat } from '../engine/rag-engine';

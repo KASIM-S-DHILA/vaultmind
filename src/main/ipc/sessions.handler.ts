@@ -1,3 +1,8 @@
+/**
+ * Session IPC: list, create, rename, and delete chat sessions within a notebook.
+ *
+ * Input validation ensures titles are strings limited to 100 characters.
+ */
 import { ipcMain } from 'electron';
 import { IPC } from '../../shared/constants';
 import { listSessions, createSession, renameSession, deleteSession } from '../database/chat-sessions.repository';

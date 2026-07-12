@@ -1,3 +1,7 @@
+/**
+ * Setup-wizard IPC: check whether setup is complete, get system info, and
+ * mark setup as complete.
+ */
 import { ipcMain } from 'electron';
 import { IPC } from '../../shared/constants';
 import { isSetupComplete, markSetupComplete, getSystemInfo } from '../setup/system-check';

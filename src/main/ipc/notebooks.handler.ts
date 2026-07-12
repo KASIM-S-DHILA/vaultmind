@@ -1,3 +1,9 @@
+/**
+ * Notebook IPC: list, create, rename, delete notebooks, and get cached or
+ * freshly-generated notebook guides.
+ *
+ * Deleting a notebook cascades to its sources, vectors, messages, and notes.
+ */
 import { ipcMain } from 'electron';
 import { IPC } from '../../shared/constants';
 import {

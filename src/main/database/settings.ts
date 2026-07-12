@@ -1,3 +1,9 @@
+/**
+ * Key-value settings store backed by the `settings` SQLite table.
+ *
+ * `getSetting` returns `null` for missing keys. `getAllSettings` returns a
+ * flat `Record<string, string>` for the renderer to consume.
+ */
 import { dbGet, dbRun, dbAll } from './sqlite';
 import type { Settings } from '../../shared/types';
 

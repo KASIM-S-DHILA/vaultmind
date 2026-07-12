@@ -1,3 +1,7 @@
+/**
+ * Settings IPC: read/write settings (with a key allowlist), list available
+ * embedding and Ollama models, and return system info.
+ */
 import { ipcMain } from 'electron';
 import { IPC } from '../../shared/constants';
 import { getAllSettings, updateSetting } from '../database/settings';

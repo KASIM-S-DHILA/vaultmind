@@ -1,3 +1,9 @@
+/**
+ * Sources hook: lists, uploads, deletes, and toggles sources for a notebook.
+ *
+ * Listens for `IPC.SOURCES.PROGRESS` events from the main process to update
+ * upload progress and refresh the list when processing completes.
+ */
 import { useState, useEffect, useCallback } from 'react';
 import type { Source, UploadProgress } from '../../shared/types';
 

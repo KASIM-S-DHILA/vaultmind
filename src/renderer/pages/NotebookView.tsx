@@ -3,21 +3,18 @@ import SourcesPanel from '../components/SourcesPanel/SourcesPanel';
 import ChatPanel from '../components/ChatPanel/ChatPanel';
 import StudioPanel from '../components/StudioPanel/StudioPanel';
 import SettingsModal from '../components/shared/SettingsModal';
+import CollapseButton from '../components/shared/CollapseButton';
 import TitleBar from '../components/TitleBar/TitleBar';
 import StatusBar from '../components/StatusBar/StatusBar';
 
 import { useSources } from '../hooks/useSources';
 import { useChat } from '../hooks/useChat';
 import { useNotebook } from '../hooks/useNotebook';
+import { useSessions } from '../hooks/useSessions';
 import type { Notebook } from '../../shared/types';
 
-interface ChatSession {
-  id: string;
-  notebook_id: string;
-  title: string;
-  created_at: number;
-  updated_at: number;
-}
+const SOURCES_WIDTH = 'var(--sources-width)';
+const STUDIO_WIDTH = 'var(--studio-width)';
 
 interface NotebookViewProps {
   notebook: Notebook;
@@ -35,49 +32,14 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
   const [modelLoadingMsg, setModelLoadingMsg] = useState('');
   const [ollamaStatus, setOllamaStatus] = useState('checking');
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const { sources, loading: sourcesLoading, uploadFiles, deleteSource, setSourceActive } = useSources(notebook.id);
+  const { sessions, currentSessionId, setCurrentSessionId, createSession, deleteSession, renameSession } = useSessions(notebook.id);
   const { messages, isStreaming, streamingContent, sendMessage, stopGeneration, clearHistory, exportChat } = useChat(notebook.id, currentSessionId || undefined);
   const { guide, guideLoading, notes, saveNotes, refreshGuide } = useNotebook(notebook.id);
 
   const activeSourceIds = sources.filter(s => s.active !== 0).map(s => s.id);
   const handleSend = (text: string) => sendMessage(text, activeSourceIds, webSearchEnabled);
-
-  // Load sessions
-  async function loadSessions() {
-    try {
-      const list = await window.vaultmind.sessions.list(notebook.id);
-      setSessions(list);
-      if (!currentSessionId && list.length > 0) {
-        setCurrentSessionId(list[0].id);
-      }
-    } catch (e) {
-      console.error('Failed to load sessions:', e);
-    }
-  }
-
-  useEffect(() => {
-    loadSessions();
-  }, [notebook.id]);
-
-  async function handleNewSession() {
-    const session = await window.vaultmind.sessions.create(notebook.id, 'New Chat');
-    if (session) setCurrentSessionId(session.id);
-    await loadSessions();
-  }
-
-  async function handleDeleteSession(id: string) {
-    await window.vaultmind.sessions.delete(id);
-    setCurrentSessionId(null);
-    await loadSessions();
-  }
-
-  async function handleRenameSession(id: string, title: string) {
-    await window.vaultmind.sessions.rename(id, title);
-    await loadSessions();
-  }
 
   function handleRefreshGuide() {
     refreshGuide(activeSourceIds.length > 0 ? activeSourceIds : undefined);
@@ -139,8 +101,8 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         <div style={{
-          width: sourcesCollapsed ? 0 : 'var(--sources-width)',
-          minWidth: sourcesCollapsed ? 0 : 'var(--sources-width)',
+          width: sourcesCollapsed ? 0 : SOURCES_WIDTH,
+          minWidth: sourcesCollapsed ? 0 : SOURCES_WIDTH,
           flexShrink: 0,
           overflow: 'hidden',
           transition: 'width 0.25s ease, min-width 0.25s ease',
@@ -156,21 +118,12 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
           />
         </div>
 
-        <button
-          onClick={() => setSourcesCollapsed(c => !c)}
-          style={{
-            position: 'absolute', left: sourcesCollapsed ? 0 : 'var(--sources-width)',
-            top: '50%', transform: 'translateY(-50%)',
-            width: 18, height: 48, zIndex: 10,
-            background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-            borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
-            cursor: 'pointer', color: 'var(--text-tertiary)',
-            fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'left 0.25s ease',
-          }}
-        >
-          {sourcesCollapsed ? '›' : '‹'}
-        </button>
+        <CollapseButton
+          collapsed={sourcesCollapsed}
+          onToggle={() => setSourcesCollapsed(c => !c)}
+          side="left"
+          offset={SOURCES_WIDTH}
+        />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <ChatPanel
@@ -191,32 +144,22 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
             sessions={sessions}
             currentSessionId={currentSessionId}
             onSessionSelect={setCurrentSessionId}
-            onNewSession={handleNewSession}
-            onDeleteSession={handleDeleteSession}
-            onRenameSession={handleRenameSession}
+            onNewSession={createSession}
+            onDeleteSession={deleteSession}
+            onRenameSession={renameSession}
           />
         </div>
 
-        <button
-          onClick={() => setStudioCollapsed(c => !c)}
-          style={{
-            position: 'absolute',
-            right: studioCollapsed ? 0 : 'var(--studio-width)',
-            top: '50%', transform: 'translateY(-50%)',
-            width: 18, height: 48, zIndex: 10,
-            background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-sm) 0 0 var(--radius-sm)',
-            cursor: 'pointer', color: 'var(--text-tertiary)',
-            fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'right 0.25s ease',
-          }}
-        >
-          {studioCollapsed ? '‹' : '›'}
-        </button>
+        <CollapseButton
+          collapsed={studioCollapsed}
+          onToggle={() => setStudioCollapsed(c => !c)}
+          side="right"
+          offset={STUDIO_WIDTH}
+        />
 
         <div style={{
-          width: studioCollapsed ? 0 : 'var(--studio-width)',
-          minWidth: studioCollapsed ? 0 : 'var(--studio-width)',
+          width: studioCollapsed ? 0 : STUDIO_WIDTH,
+          minWidth: studioCollapsed ? 0 : STUDIO_WIDTH,
           flexShrink: 0,
           overflow: 'hidden',
           transition: 'width 0.25s ease, min-width 0.25s ease',

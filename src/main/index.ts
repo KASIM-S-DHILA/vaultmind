@@ -1,3 +1,16 @@
+/**
+ * Application entry point (main process).
+ *
+ * Lifecycle:
+ *  1. Acquire single-instance lock (packaged only).
+ *  2. Create splash window.
+ *  3. Init database → vector store → register IPC handlers.
+ *  4. Create main window (does not block on Ollama).
+ *  5. Start Ollama server in background with extended timeout.
+ *  6. Create system tray.
+ *
+ * On quit the Ollama server process is killed via `before-quit`.
+ */
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { createSplashWindow } from './splash';
 import { registerAllHandlers } from './ipc';

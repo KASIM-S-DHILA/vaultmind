@@ -1,3 +1,7 @@
+/**
+ * Sources IPC: file-selection dialog, upload (async processing with progress
+ * events), deletion, active-state toggling, and content retrieval.
+ */
 import { ipcMain, dialog, BrowserWindow } from 'electron';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';

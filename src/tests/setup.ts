@@ -1,7 +1,10 @@
 import { vi } from 'vitest';
 import '@testing-library/jest-dom';
 
-// Mock window.vaultmind API
+// jsdom does not implement scrollIntoView
+Element.prototype.scrollIntoView = vi.fn();
+
+// Mock window.vaultmind API — keep in sync with actual preload bindings
 Object.defineProperty(window, 'vaultmind', {
   value: {
     window: {
@@ -27,12 +30,20 @@ Object.defineProperty(window, 'vaultmind', {
       onProgress: vi.fn().mockReturnValue(vi.fn()),
     },
     chat: {
-      send: vi.fn(),
+      send: vi.fn().mockResolvedValue({ id: 'msg1', content: 'response', citations: [] }),
       getHistory: vi.fn().mockResolvedValue([]),
       clearHistory: vi.fn(),
+      stop: vi.fn(),
+      export: vi.fn().mockResolvedValue({ success: true, filePath: '/tmp/chat.md' }),
+    },
+    sessions: {
+      list: vi.fn().mockResolvedValue([]),
+      create: vi.fn().mockResolvedValue({ id: 'sess1', notebook_id: 'nb1', title: 'New Chat', created_at: Date.now(), updated_at: Date.now() }),
+      rename: vi.fn(),
+      delete: vi.fn(),
     },
     notes: {
-      get: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
       save: vi.fn(),
     },
     settings: {
@@ -47,8 +58,10 @@ Object.defineProperty(window, 'vaultmind', {
     },
     ollama: {
       checkInstalled: vi.fn(),
-      checkRunning: vi.fn(),
+      checkRunning: vi.fn().mockResolvedValue(true),
       pullModel: vi.fn(),
+      getStatus: vi.fn().mockResolvedValue({ stage: 'ready' }),
+      warmupModel: vi.fn(),
     },
     onServerStatus: vi.fn().mockReturnValue(vi.fn()),
     setup: {

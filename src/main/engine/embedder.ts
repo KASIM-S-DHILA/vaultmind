@@ -1,3 +1,10 @@
+/**
+ * Embedding service backed by fastembed (FlagEmbedding).
+ *
+ * Manages a singleton embedder instance that is lazily initialised and
+ * automatically re-created when the configured embedding model changes.
+ * A promise-based lock prevents concurrent initialisation races.
+ */
 import { EmbeddingModel, FlagEmbedding } from 'fastembed';
 import { getSetting } from '../database/settings';
 import { DEFAULT_SETTINGS, EMBEDDING_MODELS, CHUNK_DEFAULTS } from '../../shared/constants';

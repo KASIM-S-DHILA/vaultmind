@@ -1,3 +1,10 @@
+/**
+ * SQLite database initialisation and convenience accessors.
+ *
+ * Uses better-sqlite3 (synchronous) with WAL journal mode and foreign keys
+ * enabled. Exposes `dbRun`, `dbGet`, and `dbAll` so callers don't need to
+ * interact with the Database object directly.
+ */
 import Database from 'better-sqlite3';
 import path from 'path';
 import { app } from 'electron';

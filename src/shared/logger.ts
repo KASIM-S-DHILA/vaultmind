@@ -1,3 +1,9 @@
+/**
+ * Simple structured logger used across main and preload processes.
+ *
+ * Each call is wrapped in `safeConsole` which silently catches EPIPE errors
+ * that occur when the packaged app no longer has a connected terminal.
+ */
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const PREFIX = '[VaultMind]';
@@ -10,11 +16,8 @@ function formatMessage(level: LogLevel, namespace: string, message: string, ...a
 function safeConsole(method: typeof console.log, msg: string): void {
   try {
     method(msg);
-  } catch (err: unknown) {
+  } catch {
     // EPIPE when stdout/stderr pipe is closed (packaged app, no terminal)
-    if (err && typeof err === 'object' && 'code' in err && (err as NodeJS.ErrnoException).code === 'EPIPE') {
-      // silently ignore
-    }
   }
 }
 

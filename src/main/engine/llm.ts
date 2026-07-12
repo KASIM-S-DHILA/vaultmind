@@ -1,3 +1,9 @@
+/**
+ * Thin abstraction over the Ollama streaming API.
+ *
+ * Currently delegates directly to `generateOllamaStream`; exists so that
+ * alternative LLM backends can be plugged in without changing callers.
+ */
 import { generateOllamaStream } from './ollama';
 import { logger } from '../../shared/logger';
 

@@ -1,3 +1,10 @@
+/**
+ * Ollama lifecycle management: start/stop/wait for the server, pull and warm
+ * up models, generate streams, and manage auto-start shortcuts.
+ *
+ * All HTTP calls target the configured Ollama REST API endpoint
+ * (default http://127.0.0.1:11434).
+ */
 import { spawn, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';

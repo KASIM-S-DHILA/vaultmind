@@ -1,3 +1,6 @@
+/**
+ * Notes IPC: per-notebook free-form notes (get/save).
+ */
 import { ipcMain } from 'electron';
 import { IPC } from '../../shared/constants';
 import { getNote, saveNote } from '../database/notes.repository';

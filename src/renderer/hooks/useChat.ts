@@ -1,3 +1,10 @@
+/**
+ * Chat hook: manages message history, streaming send, stop, clear, and export.
+ *
+ * Reloads history whenever `notebookId` or `sessionId` changes.
+ * Streams tokens incrementally via the IPC `CHAT.TOKEN` event so the UI
+ * can render partial responses in real time.
+ */
 import { useState, useEffect } from 'react';
 import type { Message, Citation } from '../../shared/types';
 

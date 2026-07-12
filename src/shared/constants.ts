@@ -1,3 +1,9 @@
+/**
+ * Shared constants used by both the main and renderer processes.
+ *
+ * Includes default settings, Ollama model presets, embedding-model metadata,
+ * chunking and polling defaults, and the IPC channel enum.
+ */
 export const DEFAULT_SETTINGS = {
   OLLAMA_URL: 'http://127.0.0.1:11434',
   OLLAMA_MODEL: 'gemma3:4b',

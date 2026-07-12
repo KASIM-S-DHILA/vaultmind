@@ -1,3 +1,12 @@
+/**
+ * Window and system-tray management.
+ *
+ * `createMainWindow` sets up a frameless BrowserWindow with hidden title bar,
+ * loads the renderer via Vite dev server or built files, and wires window-
+ * control IPC channels (minimise, maximise, close).
+ *
+ * `createTray` adds a system-tray icon with a context menu.
+ */
 import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron';
 import path from 'path';
 import { IPC } from '../shared/constants';

@@ -1,3 +1,10 @@
+/**
+ * Vector store backed by LanceDB.
+ *
+ * Each notebook gets its own table (`nb_<notebookId>`). Chunks are added with
+ * their embedding vectors and searchable via cosine-similarity ANN search,
+ * with optional source-id filtering.
+ */
 import lancedb = require('@lancedb/lancedb');
 import path = require('path');
 import { app } from 'electron';
