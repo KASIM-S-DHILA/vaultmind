@@ -73,6 +73,7 @@ contextBridge.exposeInMainWorld('vaultmind', {
   ollama: {
     checkInstalled: () => ipcRenderer.invoke(IPC.OLLAMA.CHECK_INSTALLED),
     checkRunning: () => ipcRenderer.invoke(IPC.OLLAMA.CHECK_RUNNING),
+    getStatus: () => ipcRenderer.invoke(IPC.OLLAMA.GET_STATUS),
     pullModel: (modelName: string, onProgress: (data: unknown) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, data: unknown) => onProgress(data);
       ipcRenderer.on(IPC.OLLAMA.PULL_PROGRESS, listener);

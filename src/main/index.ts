@@ -5,7 +5,8 @@ import { initDatabase } from './database/sqlite';
 import { initVectorStore } from './engine/vector-store';
 import { createMainWindow, createTray } from './window-manager';
 import { isSetupComplete } from './setup/system-check';
-import { startOllamaServer, waitForOllamaReady } from './engine/ollama';
+import { startOllamaServer, waitForOllamaReady, setCurrentStatus } from './engine/ollama';
+import { OLLAMA_STARTUP_TIMEOUT, OLLAMA_EXTENDED_TIMEOUT } from '../shared/constants';
 import { logger } from '../shared/logger';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -64,12 +65,26 @@ app.whenReady().then(async () => {
   // Don't block UI — create main window immediately, poll ollama in background
   mainWindow = createMainWindow(splashWindow);
   (async () => {
-    const ready = await waitForOllamaReady(30000);
-    if (ready) {
+    const quickReady = await waitForOllamaReady(OLLAMA_STARTUP_TIMEOUT);
+    if (quickReady) {
+      setCurrentStatus('ready', 100, 'Ollama AI ready!');
       broadcastStatus('ready', 100, 'Ollama AI ready!');
-    } else {
-      broadcastStatus('warning', 80, 'Ollama starting — may need a moment');
+      return;
     }
+    // Extended polling — keep trying for up to OLLAMA_EXTENDED_TIMEOUT total
+    const extendedStart = Date.now();
+    while (Date.now() - extendedStart < OLLAMA_EXTENDED_TIMEOUT) {
+      const stillReady = await waitForOllamaReady(15000);
+      if (stillReady) {
+        setCurrentStatus('ready', 100, 'Ollama AI ready!');
+        broadcastStatus('ready', 100, 'Ollama AI ready!');
+        return;
+      }
+      setCurrentStatus('starting', 80, 'Still starting Ollama...');
+      broadcastStatus('starting', 80, 'Still starting Ollama...');
+    }
+    setCurrentStatus('error', 0, 'Ollama failed to start — check installation');
+    broadcastStatus('error', 0, 'Ollama failed to start — check installation');
   })();
   createTray(mainWindow);
 

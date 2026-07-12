@@ -9,6 +9,7 @@ import {
   startOllamaServer,
   setOllamaAutoStart,
   getOllamaAutoStart,
+  getCurrentStatus,
 } from '../engine/ollama';
 
 export function registerOllamaHandlers(): void {
@@ -18,6 +19,10 @@ export function registerOllamaHandlers(): void {
 
   ipcMain.handle(IPC.OLLAMA.CHECK_RUNNING, async () => {
     return checkOllamaRunning();
+  });
+
+  ipcMain.handle(IPC.OLLAMA.GET_STATUS, async () => {
+    return getCurrentStatus();
   });
 
   ipcMain.handle(IPC.OLLAMA.PULL_MODEL, async (event, modelName: string) => {

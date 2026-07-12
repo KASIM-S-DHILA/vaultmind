@@ -110,16 +110,41 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
     const cleanup = window.vaultmind.onServerStatus?.((status: any) => {
       if (status.stage === 'ready') setOllamaStatus('ready');
       else if (status.stage === 'error') setOllamaStatus('error');
-      else if (status.stage === 'warning') setOllamaStatus('starting');
+      else if (status.stage === 'starting') setOllamaStatus('starting');
     });
 
-    // Check current status on mount; main process already started ollama
-    window.vaultmind.ollama.checkRunning().then(running => {
-      setOllamaStatus(running ? 'ready' : 'starting');
+    // Query latest status from main process (survives race with broadcasts)
+    window.vaultmind.ollama.getStatus().then((st: any) => {
+      if (st.stage === 'ready') setOllamaStatus('ready');
+      else if (st.stage === 'error') setOllamaStatus('error');
+      else {
+        // Double-check via HTTP checkRunning
+        window.vaultmind.ollama.checkRunning().then(running => {
+          setOllamaStatus(running ? 'ready' : 'starting');
+        });
+      }
     });
 
-    return () => cleanup?.();
+    // Fallback: if still 'starting' after 45s, auto-transition to error
+    const stuckTimer = setTimeout(() => {
+      setOllamaStatus(prev => prev === 'starting' ? 'error' : prev);
+    }, 45000);
+
+    return () => { cleanup?.(); clearTimeout(stuckTimer); };
   }, []);
+
+  async function handleRetryOllama() {
+    setOllamaStatus('starting');
+    try {
+      await window.vaultmind.ollama.startServer();
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        const ok = await window.vaultmind.ollama.checkRunning();
+        if (ok) { setOllamaStatus('ready'); return; }
+      }
+      setOllamaStatus('error');
+    } catch { setOllamaStatus('error'); }
+  }
 
   async function handleRename(newTitle: string) {
     await window.vaultmind.notebooks.rename(notebook.id, newTitle);
@@ -231,7 +256,7 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
       <StatusBar sources={sources} isStreaming={isStreaming} ollamaStatus={ollamaStatus} activeModel={activeModel} />
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onModelChange={handleModelChange} />}
-      <OllamaOverlay status={ollamaStatus} />
+      <OllamaOverlay status={ollamaStatus} onRetry={handleRetryOllama} />
     </div>
   );
 }

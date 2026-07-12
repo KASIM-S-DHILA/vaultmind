@@ -56,6 +56,7 @@ export const IPC = {
   OLLAMA: {
     CHECK_INSTALLED: 'ollama:checkInstalled',
     CHECK_RUNNING: 'ollama:checkRunning',
+    GET_STATUS: 'ollama:getStatus',
     PULL_MODEL: 'ollama:pullModel',
     PULL_PROGRESS: 'ollama:pullProgress',
     WARMUP: 'ollama:warmup',

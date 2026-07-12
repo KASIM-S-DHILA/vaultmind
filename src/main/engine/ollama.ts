@@ -12,6 +12,16 @@ const STARTUP_SHORTCUT_NAME = 'VaultMind - Ollama Server.lnk';
 
 let ollamaProcess: ReturnType<typeof spawn> | null = null;
 
+let _currentServerStatus: { stage: string; progress: number; message: string } = { stage: 'starting', progress: 0, message: 'Starting Ollama...' };
+
+export function getCurrentStatus(): { stage: string; progress: number; message: string } {
+  return { ..._currentServerStatus };
+}
+
+export function setCurrentStatus(stage: string, progress: number, message: string): void {
+  _currentServerStatus = { stage, progress, message };
+}
+
 async function getOllamaUrl(): Promise<string> {
   return getSetting('ollama_url') || 'http://127.0.0.1:11434';
 }

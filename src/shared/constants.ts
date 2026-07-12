@@ -45,6 +45,7 @@ export const CHUNK_DEFAULTS = {
 
 export const OLLAMA_POLL_INTERVAL = 500;
 export const OLLAMA_STARTUP_TIMEOUT = 30000;
+export const OLLAMA_EXTENDED_TIMEOUT = 120000; // 2 min total before showing error
 
 export const SQLITE_PATH = 'data/vaultmind.db';
 export const VECTOR_DB_DIR = 'data/vectors';

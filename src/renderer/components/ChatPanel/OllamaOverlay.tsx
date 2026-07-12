@@ -2,9 +2,10 @@ import React from 'react';
 
 interface OllamaOverlayProps {
   status: string;
+  onRetry?: () => void;
 }
 
-export default function OllamaOverlay({ status }: OllamaOverlayProps) {
+export default function OllamaOverlay({ status, onRetry }: OllamaOverlayProps) {
   if (status !== 'starting' && status !== 'error') return null;
 
   return (
@@ -18,7 +19,7 @@ export default function OllamaOverlay({ status }: OllamaOverlayProps) {
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
           {status === 'error'
-            ? 'Ollama failed to start. Please check that Ollama is installed and try again.'
+            ? 'Ollama failed to start or is not responding. Please check that Ollama is installed.'
             : 'Please wait while the Ollama AI server starts up.'}
         </p>
         {status === 'starting' && (
@@ -26,10 +27,14 @@ export default function OllamaOverlay({ status }: OllamaOverlayProps) {
             <div className="progress-bar-fill indeterminate" />
           </div>
         )}
-        {status === 'error' && (
-          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8 }}>
-            You can still browse notebooks and sources.
-          </p>
+        {status === 'error' && onRetry && (
+          <button
+            className="btn btn-primary"
+            onClick={onRetry}
+            style={{ marginTop: 8 }}
+          >
+            Retry
+          </button>
         )}
       </div>
     </div>

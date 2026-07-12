@@ -6,6 +6,7 @@ interface VaultMindAPI {
     maximize: () => void;
     close: () => void;
     isMaximized: () => boolean;
+    openDevTools: () => void;
     onMaximizeChange: (cb: (val: boolean) => void) => () => void;
   };
   notebooks: {
@@ -54,6 +55,7 @@ interface VaultMindAPI {
     warmupModel: (modelName: string, onProgress?: (data: { percent: number; status: string; message: string }) => void) => Promise<void>;
     downloadAndInstall: (onProgress: (data: { percent: number; status: string; message: string }) => void) => Promise<void>;
     startServer: () => Promise<void>;
+    getStatus: () => Promise<{ stage: string; progress: number; message: string }>;
     setAutoStart: (enabled: boolean) => Promise<{ success: boolean }>;
     getAutoStart: () => Promise<boolean>;
   };
