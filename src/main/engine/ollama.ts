@@ -5,7 +5,7 @@ import { app } from 'electron';
 import { downloadFile } from '../setup/model-downloader';
 import { getSetting } from '../database/settings';
 import { logger } from '../../shared/logger';
-import { OLLAMA_POLL_INTERVAL, OLLAMA_STARTUP_TIMEOUT, OLLAMA_EXTENDED_TIMEOUT } from '../../shared/constants';
+import { OLLAMA_POLL_INTERVAL, OLLAMA_STARTUP_TIMEOUT } from '../../shared/constants';
 import type { OllamaModelInfo, OllamaCheckResult } from '../../shared/types';
 
 const STARTUP_SHORTCUT_NAME = 'VaultMind - Ollama Server.lnk';

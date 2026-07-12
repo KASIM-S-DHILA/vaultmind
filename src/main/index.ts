@@ -5,7 +5,7 @@ import { initDatabase } from './database/sqlite';
 import { initVectorStore } from './engine/vector-store';
 import { createMainWindow, createTray } from './window-manager';
 import { isSetupComplete } from './setup/system-check';
-import { startOllamaServer, stopOllamaServer, setCurrentStatus, ensureOllamaInstalled, waitForOllamaReady } from './engine/ollama';
+import { startOllamaServer, stopOllamaServer, setCurrentStatus, waitForOllamaReady } from './engine/ollama';
 import { OLLAMA_STARTUP_TIMEOUT, OLLAMA_EXTENDED_TIMEOUT } from '../shared/constants';
 import { logger } from '../shared/logger';
 
@@ -64,22 +64,14 @@ app.whenReady().then(async () => {
   // Don't block UI — create main window immediately, start ollama in background
   mainWindow = createMainWindow(splashWindow);
   (async () => {
-    // Step 1: Ensure ollama binary exists (auto-install if missing)
-    setCurrentStatus('starting', 10, 'Checking Ollama installation...');
-    broadcastStatus('starting', 10, 'Checking Ollama installation...');
-    const installed = await ensureOllamaInstalled();
-    if (!installed) {
-      setCurrentStatus('error', 0, 'Ollama is not installed');
-      broadcastStatus('error', 0, 'Ollama is not installed');
-      return;
-    }
-
-    // Step 2: Start the server (fire-and-forget spawn)
+    // Only call startOllamaServer — it does a quick HTTP check first,
+    // then spawns fire-and-forget via powershell if not running.
+    // No pre-flight binary check (avoids PATH mismatches in Electron).
     setCurrentStatus('starting', 40, 'Starting Ollama server...');
     broadcastStatus('starting', 40, 'Starting Ollama server...');
     await startOllamaServer();
 
-    // Step 3: Poll for readiness (30s quick + 120s extended)
+    // Poll for readiness — 30s quick + 120s extended
     setCurrentStatus('starting', 60, 'Waiting for Ollama server...');
     broadcastStatus('starting', 60, 'Waiting for Ollama server...');
     const ready = await waitForOllamaReady(OLLAMA_STARTUP_TIMEOUT);
@@ -88,7 +80,6 @@ app.whenReady().then(async () => {
       broadcastStatus('ready', 100, 'Ollama AI ready!');
       return;
     }
-    // Extended polling
     const extendedStart = Date.now();
     while (Date.now() - extendedStart < OLLAMA_EXTENDED_TIMEOUT) {
       const stillReady = await waitForOllamaReady(15000);
