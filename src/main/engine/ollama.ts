@@ -108,13 +108,16 @@ export async function waitForOllamaReady(timeoutMs = OLLAMA_STARTUP_TIMEOUT): Pr
 
 export function stopOllamaServer(): void {
   if (ollamaProcess) {
+    const pid = ollamaProcess.pid;
     ollamaProcess.kill();
     ollamaProcess = null;
+    // Kill orphaned child by PID rather than blanket image-name kill
+    if (pid) {
+      try {
+        execSync(`taskkill /f /pid ${pid} 2>nul`, { stdio: 'ignore', windowsHide: true });
+      } catch { /* ignore */ }
+    }
   }
-  // Also kill any orphaned ollama serve from this session
-  try {
-    execSync('taskkill /f /im ollama.exe 2>nul', { stdio: 'ignore', windowsHide: true });
-  } catch { /* ignore */ }
 }
 
 export function checkOllamaInstalled(): OllamaCheckResult {
@@ -198,7 +201,14 @@ export async function downloadAndInstallOllama(
     onProgress({ percent: Math.floor(p.percent * 0.8), status: 'downloading', message: `Downloading Ollama... ${p.percent}%` });
   });
 
-  onProgress({ percent: 80, status: 'installing', message: 'Installing Ollama...' });
+  // Verify Authenticode signature before executing
+  onProgress({ percent: 80, status: 'verifying', message: 'Verifying installer signature...' });
+  const sigValid = await verifyAuthenticodeSignature(installerPath);
+  if (!sigValid) {
+    throw new Error('Installer signature verification failed — the downloaded file may be tampered with.');
+  }
+
+  onProgress({ percent: 85, status: 'installing', message: 'Installing Ollama...' });
   await new Promise<void>((resolve, reject) => {
     const proc = spawn(`"${installerPath}"`, ['/verysilent', '/norestart'], {
       stdio: 'ignore',
@@ -411,4 +421,20 @@ export async function generateSearchQuery(userMessage: string): Promise<string> 
   const query = (data.message?.content || userMessage).replace(/["']/g, '').trim();
   logger.info('Ollama', `Generated search query: "${query}" (from: "${userMessage.slice(0, 60)}")`);
   return query || userMessage;
+}
+
+/**
+ * Verify the Authenticode signature of a Windows PE file using PowerShell's
+ * Get-AuthenticodeSignature cmdlet. Returns `true` when the signer matches
+ * "Ollama" or the signature is valid from a trusted publisher.
+ */
+async function verifyAuthenticodeSignature(filePath: string): Promise<boolean> {
+  try {
+    const cmd = `powershell -NoProfile -NonInteractive -Command "$sig = Get-AuthenticodeSignature -FilePath '${filePath.replace(/'/g, "''")}'; if ($sig.Status -eq 'Valid' -and $sig.SignerCertificate -and $sig.SignerCertificate.Subject -match 'Ollama') { exit 0 } else { exit 1 }"`;
+    execSync(cmd, { stdio: 'pipe', timeout: 15000, windowsHide: true });
+    return true;
+  } catch {
+    logger.warn('Ollama', 'Authenticode signature verification failed for installer');
+    return false;
+  }
 }

@@ -5,7 +5,7 @@
  * call in `index.ts` wires everything up. Add new handlers by importing and
  * calling the relevant `register*` function below.
  */
-import { ipcMain, shell, BrowserWindow } from 'electron';
+import { app, ipcMain, shell, BrowserWindow } from 'electron';
 import { IPC } from '../../shared/constants';
 import { registerNotebookHandlers } from './notebooks.handler';
 import { registerSourceHandlers } from './sources.handler';
@@ -29,9 +29,11 @@ export function registerAllHandlers(): void {
   // External links
   ipcMain.on(IPC.EXTERNAL.OPEN, (_event, url: string) => shell.openExternal(url));
 
-  // DevTools (Ctrl+Shift+I)
-  ipcMain.on(IPC.WINDOW.DEVTOOLS, (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) win.webContents.openDevTools();
-  });
+  // DevTools (Ctrl+Shift+I) — only available in development builds
+  if (!app.isPackaged) {
+    ipcMain.on(IPC.WINDOW.DEVTOOLS, (event) => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win) win.webContents.openDevTools();
+    });
+  }
 }

@@ -62,6 +62,19 @@ export function createMainWindow(splashWindow: BrowserWindow | null): BrowserWin
     mainWindow.loadFile(path.join(__dirname, '../../dist/renderer/index.html'));
   }
 
+  // Content-Security-Policy
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    const csp = isDev
+      ? "default-src 'self'; script-src 'self' 'unsafe-eval' http://localhost:5173; style-src 'self' 'unsafe-inline' http://localhost:5173; img-src 'self' data: blob: http://localhost:5173; font-src 'self' http://localhost:5173; connect-src 'self' ws://localhost:5173 http://localhost:5173"
+      : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'";
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [csp],
+      },
+    });
+  });
+
   mainWindow.on('closed', () => {
     logger.info('Main', 'MainWindow closed');
   });

@@ -2,6 +2,15 @@ import React, { useState } from 'react';
 import TypingIndicator from './TypingIndicator';
 import './ChatPanel.css';
 
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Simple inline markdown renderer (no external deps)
 function renderMarkdown(text) {
   if (!text) return null;
@@ -28,8 +37,10 @@ function renderMarkdown(text) {
     return lines.map((line, j) => {
       if (!line.trim()) return <br key={`${i}-${j}`} />;
 
+      // Escape HTML first to prevent XSS, then process markdown
+      let processed = escapeHtml(line);
       // Bold
-      let processed = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      processed = processed.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       // Italic
       processed = processed.replace(/\*(.+?)\*/g, '<em>$1</em>');
       // Code
