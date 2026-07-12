@@ -4,6 +4,7 @@ import { registerNotebookHandlers } from './notebooks.handler';
 import { registerSourceHandlers } from './sources.handler';
 import { registerChatHandlers } from './chat.handler';
 import { registerNoteHandlers } from './notes.handler';
+import { registerSessionHandlers } from './sessions.handler';
 import { registerSettingsHandlers } from './settings.handler';
 import { registerOllamaHandlers } from './ollama.handler';
 import { registerSetupHandlers } from './setup.handler';
@@ -13,6 +14,7 @@ export function registerAllHandlers(): void {
   registerSourceHandlers();
   registerChatHandlers();
   registerNoteHandlers();
+  registerSessionHandlers();
   registerSettingsHandlers();
   registerOllamaHandlers();
   registerSetupHandlers();

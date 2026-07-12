@@ -30,6 +30,13 @@ export const IPC = {
     CLEAR: 'chat:clear',
     TOKEN: 'chat:token',
     STOP: 'chat:stop',
+    EXPORT: 'chat:export',
+  },
+  SESSIONS: {
+    LIST: 'sessions:list',
+    CREATE: 'sessions:create',
+    RENAME: 'sessions:rename',
+    DELETE: 'sessions:delete',
   },
   NOTES: {
     GET: 'notes:get',

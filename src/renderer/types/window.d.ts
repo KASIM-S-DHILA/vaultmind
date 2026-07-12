@@ -24,10 +24,17 @@ interface VaultMindAPI {
     onProgress: (cb: (data: UploadProgress) => void) => () => void;
   };
   chat: {
-    send: (notebookId: string, message: string, onToken: (token: string) => void, activeSourceIds?: string[], webSearch?: boolean) => Promise<{ id: string; content: string; citations: Citation[] }>;
+    send: (notebookId: string, message: string, onToken: (token: string) => void, activeSourceIds?: string[], webSearch?: boolean, sessionId?: string) => Promise<{ id: string; content: string; citations: Citation[] }>;
     stop: (notebookId: string) => Promise<{ success: boolean }>;
-    getHistory: (notebookId: string) => Promise<Message[]>;
-    clearHistory: (notebookId: string) => Promise<{ success: boolean }>;
+    getHistory: (notebookId: string, sessionId?: string) => Promise<Message[]>;
+    clearHistory: (notebookId: string, sessionId?: string) => Promise<{ success: boolean }>;
+    export: (notebookId: string, sessionId?: string) => Promise<{ success: boolean; filePath?: string }>;
+  };
+  sessions: {
+    list: (notebookId: string) => Promise<Array<{ id: string; notebook_id: string; title: string; created_at: number; updated_at: number }>>;
+    create: (notebookId: string, title?: string) => Promise<{ id: string; notebook_id: string; title: string; created_at: number; updated_at: number }>;
+    rename: (id: string, title: string) => Promise<{ success: boolean }>;
+    delete: (id: string) => Promise<{ success: boolean }>;
   };
   notes: {
     get: (notebookId: string) => Promise<{ content: string } | undefined>;

@@ -36,16 +36,24 @@ contextBridge.exposeInMainWorld('vaultmind', {
   },
 
   chat: {
-    send: (notebookId: string, message: string, onToken: (token: string) => void, activeSourceIds?: string[], webSearch?: boolean) => {
+    send: (notebookId: string, message: string, onToken: (token: string) => void, activeSourceIds?: string[], webSearch?: boolean, sessionId?: string) => {
       const listener = (_event: Electron.IpcRendererEvent, token: string) => onToken(token);
       ipcRenderer.on(IPC.CHAT.TOKEN, listener);
-      return ipcRenderer.invoke(IPC.CHAT.SEND, notebookId, message, activeSourceIds, webSearch).finally(() => {
+      return ipcRenderer.invoke(IPC.CHAT.SEND, notebookId, message, activeSourceIds, webSearch, sessionId).finally(() => {
         ipcRenderer.removeListener(IPC.CHAT.TOKEN, listener);
       });
     },
     stop: (notebookId: string) => ipcRenderer.invoke(IPC.CHAT.STOP, notebookId),
-    getHistory: (notebookId: string) => ipcRenderer.invoke(IPC.CHAT.HISTORY, notebookId),
-    clearHistory: (notebookId: string) => ipcRenderer.invoke(IPC.CHAT.CLEAR, notebookId),
+    getHistory: (notebookId: string, sessionId?: string) => ipcRenderer.invoke(IPC.CHAT.HISTORY, notebookId, sessionId),
+    clearHistory: (notebookId: string, sessionId?: string) => ipcRenderer.invoke(IPC.CHAT.CLEAR, notebookId, sessionId),
+    export: (notebookId: string, sessionId?: string) => ipcRenderer.invoke(IPC.CHAT.EXPORT, notebookId, sessionId),
+  },
+
+  sessions: {
+    list: (notebookId: string) => ipcRenderer.invoke(IPC.SESSIONS.LIST, notebookId),
+    create: (notebookId: string, title?: string) => ipcRenderer.invoke(IPC.SESSIONS.CREATE, notebookId, title),
+    rename: (id: string, title: string) => ipcRenderer.invoke(IPC.SESSIONS.RENAME, id, title),
+    delete: (id: string) => ipcRenderer.invoke(IPC.SESSIONS.DELETE, id),
   },
 
   notes: {

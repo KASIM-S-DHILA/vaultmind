@@ -11,6 +11,14 @@ import { useChat } from '../hooks/useChat';
 import { useNotebook } from '../hooks/useNotebook';
 import type { Notebook } from '../../shared/types';
 
+interface ChatSession {
+  id: string;
+  notebook_id: string;
+  title: string;
+  created_at: number;
+  updated_at: number;
+}
+
 interface NotebookViewProps {
   notebook: Notebook;
   onBack: () => void;
@@ -27,13 +35,44 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
   const [modelLoadingMsg, setModelLoadingMsg] = useState('');
   const [ollamaStatus, setOllamaStatus] = useState('checking');
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const { sources, loading: sourcesLoading, uploadFiles, deleteSource, setSourceActive } = useSources(notebook.id);
-  const { messages, isStreaming, streamingContent, sendMessage, stopGeneration, clearHistory } = useChat(notebook.id);
+  const { messages, isStreaming, streamingContent, sendMessage, stopGeneration, clearHistory, exportChat } = useChat(notebook.id, currentSessionId || undefined);
   const { guide, guideLoading, notes, saveNotes, refreshGuide } = useNotebook(notebook.id);
 
   const activeSourceIds = sources.filter(s => s.active !== 0).map(s => s.id);
   const handleSend = (text: string) => sendMessage(text, activeSourceIds, webSearchEnabled);
+
+  // Load sessions
+  async function loadSessions() {
+    const list = await window.vaultmind.sessions.list(notebook.id);
+    setSessions(list);
+    if (!currentSessionId && list.length > 0) {
+      setCurrentSessionId(list[0].id);
+    }
+  }
+
+  useEffect(() => {
+    loadSessions();
+  }, [notebook.id]);
+
+  async function handleNewSession() {
+    await window.vaultmind.sessions.create(notebook.id, 'New Chat');
+    await loadSessions();
+  }
+
+  async function handleDeleteSession(id: string) {
+    await window.vaultmind.sessions.delete(id);
+    setCurrentSessionId(null);
+    await loadSessions();
+  }
+
+  async function handleRenameSession(id: string, title: string) {
+    await window.vaultmind.sessions.rename(id, title);
+    await loadSessions();
+  }
 
   function handleRefreshGuide() {
     refreshGuide(activeSourceIds.length > 0 ? activeSourceIds : undefined);
@@ -146,6 +185,7 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
             onSend={handleSend}
             onStop={stopGeneration}
             onClearHistory={clearHistory}
+            onExportChat={exportChat}
             onCitationClick={setActiveCitation}
             suggestedQuestions={guide?.suggestedQuestions || []}
             modelLoading={modelLoading}
@@ -153,6 +193,12 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
             ollamaStatus={ollamaStatus}
             webSearchEnabled={webSearchEnabled}
             onWebSearchToggle={() => setWebSearchEnabled(v => !v)}
+            sessions={sessions}
+            currentSessionId={currentSessionId}
+            onSessionSelect={setCurrentSessionId}
+            onNewSession={handleNewSession}
+            onDeleteSession={handleDeleteSession}
+            onRenameSession={handleRenameSession}
           />
         </div>
 

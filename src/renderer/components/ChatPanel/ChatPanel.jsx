@@ -3,12 +3,16 @@ import MessageBubble from './MessageBubble';
 import './ChatPanel.css';
 
 export default function ChatPanel({
-  messages, isStreaming, streamingContent, onSend, onStop, onClearHistory,
+  messages, isStreaming, streamingContent, onSend, onStop, onClearHistory, onExportChat,
   onCitationClick, suggestedQuestions, modelLoading, modelLoadingMsg, ollamaStatus,
   webSearchEnabled, onWebSearchToggle,
+  sessions, currentSessionId, onSessionSelect, onNewSession, onDeleteSession, onRenameSession,
 }) {
   const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [showSessions, setShowSessions] = useState(false);
+  const [renamingSession, setRenamingSession] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -36,6 +40,7 @@ export default function ChatPanel({
     inputRef.current?.focus();
   }
 
+  const currentTitle = sessions.find(s => s.id === currentSessionId)?.title || 'Chat';
   const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
@@ -43,7 +48,64 @@ export default function ChatPanel({
       {/* Header */}
       <div className="chat-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontWeight: 600, fontSize: 14 }}>Chat</span>
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowSessions(v => !v)}
+              title="Switch chat session"
+              style={{ fontWeight: 600, fontSize: 14, gap: 4 }}
+            >
+              {currentTitle} ▾
+            </button>
+            {showSessions && (
+              <div className="session-dropdown">
+                {sessions.map(s => (
+                  <div key={s.id} className="session-item">
+                    {renamingSession === s.id ? (
+                      <input
+                        className="session-rename-input"
+                        value={renameValue}
+                        onChange={e => setRenameValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            onRenameSession(s.id, renameValue);
+                            setRenamingSession(null);
+                          }
+                          if (e.key === 'Escape') setRenamingSession(null);
+                        }}
+                        onBlur={() => setRenamingSession(null)}
+                        autoFocus
+                        onClick={e => e.stopPropagation()}
+                      />
+                    ) : (
+                      <span
+                        className={`session-item-name ${s.id === currentSessionId ? 'active' : ''}`}
+                        onClick={() => { onSessionSelect(s.id); setShowSessions(false); }}
+                      >
+                        {s.title}
+                      </span>
+                    )}
+                    <div className="session-item-actions">
+                      <button
+                        className="btn-icon"
+                        title="Rename"
+                        onClick={e => { e.stopPropagation(); setRenamingSession(s.id); setRenameValue(s.title); }}
+                      >✎</button>
+                      <button
+                        className="btn-icon"
+                        title="Delete"
+                        onClick={e => { e.stopPropagation(); onDeleteSession(s.id); setShowSessions(false); }}
+                      >✕</button>
+                    </div>
+                  </div>
+                ))}
+                <div className="session-divider" />
+                <button className="session-new-btn" onClick={() => { onNewSession(); setShowSessions(false); }}>
+                  + New Chat
+                </button>
+              </div>
+            )}
+          </div>
           <span
             className={`ollama-indicator ${ollamaStatus === 'ready' ? 'connected' : ollamaStatus === 'error' ? 'error' : 'connecting'}`}
             title={
@@ -54,15 +116,18 @@ export default function ChatPanel({
             }
           />
         </div>
-        {messages.length > 0 && (
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={onClearHistory}
-            title="Clear chat history"
-          >
-            🗑 Clear
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {messages.length > 0 && (
+            <>
+              <button className="btn btn-ghost btn-sm" onClick={onExportChat} title="Export chat as Markdown">
+                ↓ Export
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={onClearHistory} title="Clear chat history">
+                🗑 Clear
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Messages */}

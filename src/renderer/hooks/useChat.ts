@@ -7,7 +7,7 @@ interface ChatResult {
   citations: Citation[];
 }
 
-export function useChat(notebookId: string) {
+export function useChat(notebookId: string, sessionId?: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
@@ -16,11 +16,11 @@ export function useChat(notebookId: string) {
   useEffect(() => {
     if (!notebookId) return;
     loadHistory();
-  }, [notebookId]);
+  }, [notebookId, sessionId]);
 
   async function loadHistory() {
     try {
-      const history = await window.vaultmind.chat.getHistory(notebookId);
+      const history = await window.vaultmind.chat.getHistory(notebookId, sessionId);
       setMessages(history);
     } catch (e) {
       setError((e as Error).message);
@@ -42,7 +42,7 @@ export function useChat(notebookId: string) {
       const result: ChatResult = await window.vaultmind.chat.send(notebookId, text, (token) => {
         accumulated += token;
         setStreamingContent(accumulated);
-      }, activeSourceIds, webSearch);
+      }, activeSourceIds, webSearch, sessionId);
 
       setMessages(prev => [...prev, {
         id: result.id,
@@ -77,9 +77,13 @@ export function useChat(notebookId: string) {
   }
 
   async function clearHistory() {
-    await window.vaultmind.chat.clearHistory(notebookId);
+    await window.vaultmind.chat.clearHistory(notebookId, sessionId);
     setMessages([]);
   }
 
-  return { messages, isStreaming, streamingContent, sendMessage, stopGeneration, clearHistory, error };
+  async function exportChat() {
+    return window.vaultmind.chat.export(notebookId, sessionId);
+  }
+
+  return { messages, isStreaming, streamingContent, sendMessage, stopGeneration, clearHistory, exportChat, error };
 }

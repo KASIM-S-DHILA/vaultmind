@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import Database from 'better-sqlite3';
 import { logger } from '../../shared/logger';
 
@@ -97,6 +98,30 @@ RULES:
 
 CONTEXT:
 {context}`);
+    },
+  },
+  {
+    version: 4,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+          id TEXT PRIMARY KEY,
+          notebook_id TEXT NOT NULL REFERENCES notebooks(id) ON DELETE CASCADE,
+          title TEXT NOT NULL DEFAULT 'Chat',
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+        ALTER TABLE messages ADD COLUMN session_id TEXT REFERENCES chat_sessions(id) ON DELETE SET NULL;
+      `);
+      // Create a default session for each notebook that has messages
+      const notebooks = db.prepare('SELECT DISTINCT notebook_id FROM messages').all() as { notebook_id: string }[];
+      const insertSession = db.prepare('INSERT INTO chat_sessions (id, notebook_id, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?)');
+      const updateMessages = db.prepare('UPDATE messages SET session_id = ? WHERE notebook_id = ? AND session_id IS NULL');
+      for (const { notebook_id } of notebooks) {
+        const sessionId = uuidv4();
+        insertSession.run(sessionId, notebook_id, 'Chat 1', Date.now(), Date.now());
+        updateMessages.run(sessionId, notebook_id);
+      }
     },
   },
 ];
