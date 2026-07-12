@@ -84,13 +84,14 @@ CONTEXT:
   },
 ];
 
-export default function SettingsModal({ onClose, onModelChange }) {
+export default function SettingsModal({ onClose, onModelChange, ollamaStatus, onOllamaStatusChange }) {
   const [tab, setTab] = useState('models');
   const [models, setModels] = useState(null);
   const [settings, setSettings] = useState(null);
   const [ollamaModels, setOllamaModels] = useState([]);
   const [ollamaLoading, setOllamaLoading] = useState(false);
   const [ollamaError, setOllamaError] = useState(null);
+  const [serverStarting, setServerStarting] = useState(false);
   const [autoStart, setAutoStart] = useState(false);
   const { addToast } = useToast();
 
@@ -124,6 +125,31 @@ export default function SettingsModal({ onClose, onModelChange }) {
     } finally {
       setOllamaLoading(false);
     }
+  }
+
+  async function handleStartServer() {
+    setServerStarting(true);
+    setOllamaError(null);
+    onOllamaStatusChange?.('starting');
+    try {
+      await window.vaultmind.ollama.startServer();
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        const ok = await window.vaultmind.ollama.checkRunning();
+        if (ok) {
+          onOllamaStatusChange?.('ready');
+          addToast('Ollama server is running', 'success');
+          setServerStarting(false);
+          return;
+        }
+      }
+      onOllamaStatusChange?.('error');
+      setOllamaError('Server did not start within 60 seconds.');
+    } catch {
+      onOllamaStatusChange?.('error');
+      setOllamaError('Failed to start server.');
+    }
+    setServerStarting(false);
   }
 
   async function handleSettingChange(key, value) {
@@ -198,6 +224,22 @@ export default function SettingsModal({ onClose, onModelChange }) {
                 <button className="btn btn-secondary" onClick={fetchOllamaModels} disabled={ollamaLoading}>
                   {ollamaLoading ? 'Connecting...' : '🔄 Connect'}
                 </button>
+              </div>
+
+              {/* Server status indicator */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 12 }}>
+                <span style={{
+                  display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+                  background: ollamaStatus === 'ready' ? 'var(--success)' : ollamaStatus === 'error' ? 'var(--error)' : ollamaStatus === 'starting' ? 'var(--warning)' : 'var(--text-tertiary)',
+                }} />
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {ollamaStatus === 'ready' ? 'Connected' : ollamaStatus === 'error' ? 'Disconnected' : ollamaStatus === 'starting' ? 'Starting...' : 'Checking...'}
+                </span>
+                {(ollamaStatus === 'error' || ollamaStatus === 'starting') && (
+                  <button className="btn btn-secondary btn-sm" onClick={handleStartServer} disabled={serverStarting} style={{ marginLeft: 'auto', fontSize: 11, padding: '4px 10px' }}>
+                    {serverStarting ? 'Starting...' : ollamaStatus === 'starting' ? 'Retry' : 'Start Server'}
+                  </button>
+                )}
               </div>
 
               {ollamaError && (

@@ -5,7 +5,7 @@ import StudioPanel from '../components/StudioPanel/StudioPanel';
 import SettingsModal from '../components/shared/SettingsModal';
 import TitleBar from '../components/TitleBar/TitleBar';
 import StatusBar from '../components/StatusBar/StatusBar';
-import OllamaOverlay from '../components/ChatPanel/OllamaOverlay';
+
 import { useSources } from '../hooks/useSources';
 import { useChat } from '../hooks/useChat';
 import { useNotebook } from '../hooks/useNotebook';
@@ -113,38 +113,18 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
       else if (status.stage === 'starting') setOllamaStatus('starting');
     });
 
-    // Query latest status from main process (survives race with broadcasts)
     window.vaultmind.ollama.getStatus().then((st: any) => {
       if (st.stage === 'ready') setOllamaStatus('ready');
       else if (st.stage === 'error') setOllamaStatus('error');
       else {
-        // Double-check via HTTP checkRunning
         window.vaultmind.ollama.checkRunning().then(running => {
           setOllamaStatus(running ? 'ready' : 'starting');
         });
       }
     });
 
-    // Fallback: if still 'starting' after 45s, auto-transition to error
-    const stuckTimer = setTimeout(() => {
-      setOllamaStatus(prev => prev === 'starting' ? 'error' : prev);
-    }, 45000);
-
-    return () => { cleanup?.(); clearTimeout(stuckTimer); };
+    return () => cleanup?.();
   }, []);
-
-  async function handleRetryOllama() {
-    setOllamaStatus('starting');
-    try {
-      await window.vaultmind.ollama.startServer();
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 1000));
-        const ok = await window.vaultmind.ollama.checkRunning();
-        if (ok) { setOllamaStatus('ready'); return; }
-      }
-      setOllamaStatus('error');
-    } catch { setOllamaStatus('error'); }
-  }
 
   async function handleRename(newTitle: string) {
     await window.vaultmind.notebooks.rename(notebook.id, newTitle);
@@ -255,8 +235,7 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
 
       <StatusBar sources={sources} isStreaming={isStreaming} ollamaStatus={ollamaStatus} activeModel={activeModel} />
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onModelChange={handleModelChange} />}
-      <OllamaOverlay status={ollamaStatus} onRetry={handleRetryOllama} />
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} onModelChange={handleModelChange} ollamaStatus={ollamaStatus} onOllamaStatusChange={setOllamaStatus} />}
     </div>
   );
 }
