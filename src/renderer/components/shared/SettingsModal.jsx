@@ -116,7 +116,7 @@ export default function SettingsModal({ onClose, onModelChange, ollamaStatus, on
       const list = await window.vaultmind.settings.listOllamaModels();
       setOllamaModels(list);
       if (list.length === 0) {
-        setOllamaError('No models found. Open a terminal and run "ollama pull phi4".');
+        setOllamaError('No models found. Open a terminal and run "ollama pull gemma3:4b".');
       } else {
         addToast('Connected to Ollama!', 'success');
       }

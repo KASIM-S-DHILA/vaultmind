@@ -86,7 +86,7 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
   const prevActiveModel = useRef(activeModel);
   useEffect(() => {
     window.vaultmind.settings.get().then(s => {
-      const m = s.ollama_model || 'phi4:latest';
+      const m = s.ollama_model || 'gemma3:4b';
       setActiveModel(m);
       prevActiveModel.current = m;
     });
@@ -103,6 +103,7 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
     } catch {}
     setModelLoading(false);
     setModelLoadingMsg('');
+    await window.vaultmind.settings.update('ollama_model', newModel);
     setActiveModel(newModel);
     prevActiveModel.current = newModel;
   }

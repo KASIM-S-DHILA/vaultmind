@@ -1,6 +1,8 @@
 import { BrowserWindow } from 'electron';
 import path from 'path';
 
+const ICON_PATH = '../../build/icon.ico';
+
 export function createSplashWindow(): BrowserWindow {
   const splash = new BrowserWindow({
     width: 480,
@@ -11,7 +13,7 @@ export function createSplashWindow(): BrowserWindow {
     resizable: false,
     center: true,
     skipTaskbar: true,
-    icon: path.join(__dirname, '../../build/icon.ico'),
+    icon: path.join(__dirname, ICON_PATH),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

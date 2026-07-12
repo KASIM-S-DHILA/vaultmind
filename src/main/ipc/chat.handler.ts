@@ -4,7 +4,7 @@ import { streamChat } from '../engine/rag-engine';
 import { getMessageHistory, addUserMessage, addAssistantMessage, clearMessageHistory } from '../database/messages.repository';
 import { listSessions, ensureDefaultSession, getSession } from '../database/chat-sessions.repository';
 import { touchNotebook } from '../database/notebooks.repository';
-import fs from 'fs';
+import { writeFile } from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import type { Citation } from '../../shared/types';
@@ -139,7 +139,7 @@ export function registerChatHandlers(): void {
       return { success: false };
     }
 
-    fs.writeFileSync(result.filePath, md, 'utf-8');
+    await writeFile(result.filePath, md, 'utf-8');
     return { success: true, filePath: result.filePath };
   });
 }

@@ -13,21 +13,30 @@ const MODEL_MAP: Record<string, EmbeddingModel> = {
 
 let embedder: FlagEmbedding | null = null;
 let currentModelName: string | null = null;
+let embedderInitPromise: Promise<FlagEmbedding> | null = null;
 
 async function getEmbedder(): Promise<FlagEmbedding> {
   const modelName = (getSetting('embedding_model') || DEFAULT_SETTINGS.EMBEDDING_MODEL) as ModelName;
   if (embedder && currentModelName === modelName) return embedder;
 
-  embedder = null;
+  if (embedderInitPromise) return embedderInitPromise;
 
-  const modelType = MODEL_MAP[modelName];
-  if (!modelType) throw new Error(`Unknown embedding model: ${modelName}`);
+  embedderInitPromise = (async () => {
+    embedder = null;
+    const modelType = MODEL_MAP[modelName];
+    if (!modelType) throw new Error(`Unknown embedding model: ${modelName}`);
+    logger.info('Embedder', `Loading: ${modelName}`);
+    embedder = await FlagEmbedding.init({ model: modelType });
+    currentModelName = modelName;
+    logger.info('Embedder', `Ready: ${modelName} (dim: ${EMBEDDING_MODELS[modelName]?.dimensions ?? 384})`);
+    return embedder;
+  })();
 
-  logger.info('Embedder', `Loading: ${modelName}`);
-  embedder = await FlagEmbedding.init({ model: modelType });
-  currentModelName = modelName;
-  logger.info('Embedder', `Ready: ${modelName} (dim: ${EMBEDDING_MODELS[modelName]?.dimensions ?? 384})`);
-  return embedder;
+  try {
+    return await embedderInitPromise;
+  } finally {
+    embedderInitPromise = null;
+  }
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {

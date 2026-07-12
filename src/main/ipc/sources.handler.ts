@@ -53,7 +53,7 @@ export function registerSourceHandlers(): void {
           invalidateNotebookGuide(notebookId);
           event.sender.send(IPC.SOURCES.PROGRESS, { sourceId: id, status: 'ready', progress: 100 });
         } catch (err) {
-          const message = (err as Error).message;
+          const message = err instanceof Error ? err.message : String(err);
           updateSourceStatus(id, 'error', { error_message: message });
           event.sender.send(IPC.SOURCES.PROGRESS, { sourceId: id, status: 'error', error: message });
         }

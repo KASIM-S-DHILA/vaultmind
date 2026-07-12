@@ -1,5 +1,5 @@
 import path from 'path';
-import fs from 'fs';
+import { stat } from 'fs/promises';
 import { processPDF } from './pdf-processor';
 import { processText } from './text-processor';
 import { chunkText } from './chunker';
@@ -48,7 +48,7 @@ export async function processFile(options: ProcessFileOptions): Promise<void> {
   sendProgress({ status: 'processing', progress: 70, message: `Embedding ${chunks.length} chunks...` });
   await addChunks(notebookId, chunks);
 
-  const stats = fs.statSync(filePath);
+  const stats = await stat(filePath);
   updateSourceStatus(id, 'ready', { chunk_count: chunks.length });
 
   logger.info('Processor', `File processed: ${filename} (${chunks.length} chunks, ${stats.size} bytes)`);

@@ -23,7 +23,7 @@ export function useChat(notebookId: string, sessionId?: string) {
       const history = await window.vaultmind.chat.getHistory(notebookId, sessionId);
       setMessages(history);
     } catch (e) {
-      setError((e as Error).message);
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -54,7 +54,7 @@ export function useChat(notebookId: string, sessionId?: string) {
         created_at: Date.now(),
       }]);
     } catch (e) {
-      const msg = (e as Error).message;
+      const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
       setMessages(prev => [...prev, {
         id: String(Date.now()),

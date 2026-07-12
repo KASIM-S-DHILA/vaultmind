@@ -28,7 +28,7 @@ export async function searchWeb(query: string, maxResults = 5): Promise<WebSearc
     try {
       return await searchGoogle(query, googleKey, googleCx, maxResults);
     } catch (err) {
-      logger.warn('WebSearch', `Google search failed, falling back to DDG: ${(err as Error).message}`);
+      logger.warn('WebSearch', `Google search failed, falling back to DDG: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

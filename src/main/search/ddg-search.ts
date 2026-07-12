@@ -79,7 +79,12 @@ export async function ddgSearch(query: string, maxResults = 5): Promise<DdgResul
         reject(new Error(`Search page load failed: ${desc}`));
       });
 
-      win!.loadURL(url);
+      try {
+        win!.loadURL(url);
+      } catch (err) {
+        clearTimeout(timer);
+        reject(new Error(`Failed to load search URL: ${err instanceof Error ? err.message : String(err)}`));
+      }
     });
 
     const allResults: DdgResult[] = JSON.parse(rawJson);

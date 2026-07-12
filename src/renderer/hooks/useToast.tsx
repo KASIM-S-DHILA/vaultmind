@@ -16,7 +16,6 @@ const ToastContext = createContext<ToastContextType | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const nextId = useState(0);
 
   const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
     const id = Date.now();

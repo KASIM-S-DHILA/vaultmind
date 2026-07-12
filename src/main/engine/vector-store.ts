@@ -116,8 +116,8 @@ export async function deleteSourceVectors(sourceId: string): Promise<void> {
       const table = await getDb().openTable(tableName);
       const safeId = sourceId.replace(/'/g, "''");
       await table.delete(`source_id = '${safeId}'`);
-    } catch {
-      // Table might not have this source — skip
+    } catch (err) {
+      logger.warn('VectorStore', 'Table might not have this source — skip:', err instanceof Error ? err.message : String(err));
     }
   }
   logger.info('VectorStore', 'Deleted vectors for source', sourceId);

@@ -1,4 +1,4 @@
-import { spawn, execSync, exec } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
@@ -8,6 +8,7 @@ import { logger } from '../../shared/logger';
 import { OLLAMA_POLL_INTERVAL, OLLAMA_STARTUP_TIMEOUT } from '../../shared/constants';
 import type { OllamaModelInfo, OllamaCheckResult } from '../../shared/types';
 
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
 const STARTUP_SHORTCUT_NAME = 'VaultMind - Ollama Server.lnk';
 
 let ollamaProcess: ReturnType<typeof spawn> | null = null;
@@ -45,7 +46,7 @@ export async function ensureOllamaInstalled(): Promise<boolean> {
       await downloadAndInstallOllama(() => {});
       return true;
     } catch (err) {
-      logger.error('Ollama', 'Auto-install failed:', (err as Error).message);
+      logger.error('Ollama', 'Auto-install failed:', err instanceof Error ? err.message : String(err));
       return false;
     }
   }
@@ -172,7 +173,7 @@ export async function listOllamaModels(): Promise<OllamaModelInfo[]> {
     const data = await res.json();
     return data.models || [];
   } catch (err) {
-    logger.warn('Ollama', 'Failed to connect to server:', (err as Error).message);
+    logger.warn('Ollama', 'Failed to connect to server:', err instanceof Error ? err.message : String(err));
     return [];
   }
 }
@@ -218,7 +219,7 @@ export async function warmupModel(
   const baseUrl = await getOllamaUrl();
   const res = await fetch(baseUrl + '/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: JSON_HEADERS,
     body: JSON.stringify({
       model: modelName,
       messages: [{ role: 'user', content: 'hi' }],
@@ -293,7 +294,7 @@ export function setOllamaAutoStart(enabled: boolean): boolean {
     }
     return true;
   } catch (err) {
-    logger.warn('Ollama', 'Failed to set auto-start:', (err as Error).message);
+    logger.warn('Ollama', 'Failed to set auto-start:', err instanceof Error ? err.message : String(err));
     return false;
   }
 }
@@ -311,7 +312,7 @@ export async function generateOllamaStream(options: {
 }): Promise<string> {
   const { systemPrompt, userMessage, onToken, signal } = options;
   const baseUrl = await getOllamaUrl();
-  const model = getSetting('ollama_model') || 'phi4:latest';
+  const model = getSetting('ollama_model') || 'gemma3:4b';
   const temperature = parseFloat(getSetting('llm_temperature') || '0.3');
 
   logger.info('Ollama', `Generating stream with model: ${model} on ${baseUrl}`);
@@ -320,7 +321,7 @@ export async function generateOllamaStream(options: {
 
   const res = await fetch(baseUrl + '/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: JSON_HEADERS,
     body: JSON.stringify({
       model,
       messages: [
@@ -378,11 +379,11 @@ export async function generateOllamaStream(options: {
 
 export async function generateSearchQuery(userMessage: string): Promise<string> {
   const baseUrl = await getOllamaUrl();
-  const model = getSetting('ollama_model') || 'phi4:latest';
+  const model = getSetting('ollama_model') || 'gemma3:4b';
 
   const res = await fetch(baseUrl + '/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: JSON_HEADERS,
     body: JSON.stringify({
       model,
       messages: [

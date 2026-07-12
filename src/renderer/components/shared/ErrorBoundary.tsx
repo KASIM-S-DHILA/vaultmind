@@ -16,7 +16,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
       return (
         <div style={{ padding: 40, color: 'var(--error, #f87171)', fontFamily: 'monospace' }}>
           <h2>Render Error</h2>
-          <pre style={{ whiteSpace: 'pre-wrap', marginTop: 12 }}>{this.state.error.stack}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', marginTop: 12 }}>{this.state.error instanceof Error ? this.state.error.stack : String(this.state.error)}</pre>
           <button onClick={() => this.setState({ error: null })} style={{ marginTop: 16, padding: '8px 16px' }}>
             Retry
           </button>

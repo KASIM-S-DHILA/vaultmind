@@ -4,12 +4,11 @@ import { registerAllHandlers } from './ipc';
 import { initDatabase } from './database/sqlite';
 import { initVectorStore } from './engine/vector-store';
 import { createMainWindow, createTray } from './window-manager';
-import { isSetupComplete } from './setup/system-check';
 import { startOllamaServer, stopOllamaServer, setCurrentStatus, waitForOllamaReady } from './engine/ollama';
 import { OLLAMA_STARTUP_TIMEOUT, OLLAMA_EXTENDED_TIMEOUT } from '../shared/constants';
 import { logger } from '../shared/logger';
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = !app.isPackaged;
 
 if (!isDev) {
   const gotLock = app.requestSingleInstanceLock();
@@ -44,15 +43,16 @@ app.whenReady().then(async () => {
     broadcastStatus('db', 10, 'Initializing database...');
     await initDatabase();
   } catch (err) {
-    logger.error('Startup', 'Database init failed:', (err as Error).message);
-    broadcastStatus('error', 0, 'Database error: ' + (err as Error).message);
+    const dbErrMsg = err instanceof Error ? err.message : String(err);
+    logger.error('Startup', 'Database init failed:', dbErrMsg);
+    broadcastStatus('error', 0, 'Database error: ' + dbErrMsg);
   }
 
   try {
     broadcastStatus('vectors', 30, 'Preparing vector store...');
     await initVectorStore();
   } catch (err) {
-    logger.warn('Startup', 'Vector store init failed, RAG will be unavailable:', (err as Error).message);
+    logger.warn('Startup', 'Vector store init failed, RAG will be unavailable:', err instanceof Error ? err.message : String(err));
     broadcastStatus('vectors', 30, 'Vector store unavailable');
   }
 
@@ -64,14 +64,10 @@ app.whenReady().then(async () => {
   // Don't block UI — create main window immediately, start ollama in background
   mainWindow = createMainWindow(splashWindow);
   (async () => {
-    // Only call startOllamaServer — it does a quick HTTP check first,
-    // then spawns fire-and-forget via powershell if not running.
-    // No pre-flight binary check (avoids PATH mismatches in Electron).
     setCurrentStatus('starting', 40, 'Starting Ollama server...');
     broadcastStatus('starting', 40, 'Starting Ollama server...');
     await startOllamaServer();
 
-    // Poll for readiness — 30s quick + 120s extended
     setCurrentStatus('starting', 60, 'Waiting for Ollama server...');
     broadcastStatus('starting', 60, 'Waiting for Ollama server...');
     const ready = await waitForOllamaReady(OLLAMA_STARTUP_TIMEOUT);
@@ -93,7 +89,7 @@ app.whenReady().then(async () => {
     }
     setCurrentStatus('error', 0, 'Ollama failed to start');
     broadcastStatus('error', 0, 'Ollama failed to start');
-  })();
+  })().catch(err => logger.error('Startup', 'Ollama startup failed:', err instanceof Error ? err.message : String(err)));
   createTray(mainWindow);
 
   // Cleanup server on quit

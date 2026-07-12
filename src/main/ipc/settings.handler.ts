@@ -9,7 +9,10 @@ export function registerSettingsHandlers(): void {
   ipcMain.handle(IPC.SETTINGS.GET, async () => getAllSettings());
 
   ipcMain.handle(IPC.SETTINGS.UPDATE, async (_event, key: string, value: string) => {
-    updateSetting(key, value);
+    if (!key || typeof key !== 'string') throw new Error('Invalid setting key');
+    const allowed = ['ollama_url', 'ollama_model', 'embedding_model', 'llm_temperature', 'llm_context_size', 'retrieval_top_k', 'chunk_size', 'chunk_overlap', 'system_prompt', 'google_api_key', 'google_search_engine_id'];
+    if (!allowed.includes(key)) throw new Error(`Unknown setting: ${key}`);
+    updateSetting(key, String(value));
     return { success: true };
   });
 

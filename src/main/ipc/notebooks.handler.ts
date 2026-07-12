@@ -21,11 +21,13 @@ export function registerNotebookHandlers(): void {
   });
 
   ipcMain.handle(IPC.NOTEBOOKS.CREATE, async (_event, title?: string) => {
-    return createNotebook(title);
+    const safeTitle = typeof title === 'string' ? title.slice(0, 200) : undefined;
+    return createNotebook(safeTitle);
   });
 
   ipcMain.handle(IPC.NOTEBOOKS.RENAME, async (_event, id: string, title: string) => {
-    return renameNotebook(id, title);
+    if (!title || typeof title !== 'string') throw new Error('Invalid title');
+    return renameNotebook(id, title.slice(0, 200));
   });
 
   ipcMain.handle(IPC.NOTEBOOKS.DELETE, async (_event, id: string) => {
@@ -34,7 +36,9 @@ export function registerNotebookHandlers(): void {
       for (const src of sources) {
         await deleteSourceVectors(src.id).catch(() => {});
       }
-    } catch {}
+    } catch (err) {
+      logger.warn('Notebooks', 'Failed to delete source vectors:', err instanceof Error ? err.message : String(err));
+    }
     clearMessageHistory(id);
     dbRun('DELETE FROM notes WHERE notebook_id = ?', [id]);
     dbRun('DELETE FROM sources WHERE notebook_id = ?', [id]);

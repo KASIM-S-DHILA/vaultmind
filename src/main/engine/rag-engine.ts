@@ -74,7 +74,7 @@ export async function streamChat(options: StreamChatOptions): Promise<string> {
       const searchQuery = await generateSearchQuery(message);
       webResults = await searchWeb(searchQuery);
     } catch (err) {
-      logger.warn('RAG', `Web search failed: ${(err as Error).message}`);
+      logger.warn('RAG', `Web search failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

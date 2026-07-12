@@ -18,7 +18,8 @@ export function useNotebook(notebookId: string) {
     try {
       const result = await window.vaultmind.notebooks.getGuide(notebookId, sourceIds);
       setGuide(result);
-    } catch {
+    } catch (err) {
+      console.warn('Failed to load guide:', err instanceof Error ? err.message : String(err));
       setGuide(null);
     } finally {
       setGuideLoading(false);
@@ -29,8 +30,8 @@ export function useNotebook(notebookId: string) {
     try {
       const result = await window.vaultmind.notes.get(notebookId);
       if (result) setNotes(result.content || '');
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('Failed to load notes:', err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -38,8 +39,8 @@ export function useNotebook(notebookId: string) {
     setNotes(content);
     try {
       await window.vaultmind.notes.save(notebookId, content);
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('Failed to save notes:', err instanceof Error ? err.message : String(err));
     }
   }
 

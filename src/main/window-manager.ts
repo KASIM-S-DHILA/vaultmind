@@ -4,6 +4,8 @@ import { IPC } from '../shared/constants';
 import { WINDOW_DEFAULTS } from '../shared/constants';
 import { logger } from '../shared/logger';
 
+const ICON_PATH = '../../build/icon.ico';
+
 export function createMainWindow(splashWindow: BrowserWindow | null): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: WINDOW_DEFAULTS.WIDTH,
@@ -16,7 +18,7 @@ export function createMainWindow(splashWindow: BrowserWindow | null): BrowserWin
     frame: false,
     titleBarStyle: 'hidden',
     backgroundColor: '#0a0b0f',
-    icon: path.join(__dirname, '../../build/icon.ico'),
+    icon: path.join(__dirname, ICON_PATH),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -44,7 +46,7 @@ export function createMainWindow(splashWindow: BrowserWindow | null): BrowserWin
     mainWindow.focus();
   });
 
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = !app.isPackaged;
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
   } else {
@@ -74,7 +76,7 @@ export function createMainWindow(splashWindow: BrowserWindow | null): BrowserWin
 
 export function createTray(mainWindow: BrowserWindow | null): Tray | null {
   try {
-    const iconPath = path.join(__dirname, '../../build/icon.ico');
+    const iconPath = path.join(__dirname, ICON_PATH);
     const icon = nativeImage.createFromPath(iconPath);
     const tray = new Tray(icon.resize({ width: 16, height: 16 }));
 
@@ -92,7 +94,7 @@ export function createTray(mainWindow: BrowserWindow | null): Tray | null {
     tray.on('double-click', () => { mainWindow?.show(); mainWindow?.focus(); });
     return tray;
   } catch (e) {
-    logger.warn('Main', 'Tray creation failed:', (e as Error).message);
+    logger.warn('Main', 'Tray creation failed:', e instanceof Error ? e.message : String(e));
     return null;
   }
 }

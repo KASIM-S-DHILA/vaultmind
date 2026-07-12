@@ -29,7 +29,7 @@ export function getSystemInfo(): SystemInfo {
     // Ollama not installed
   }
 
-  let recommendedLLM = 'phi4:latest';
+  let recommendedLLM = 'gemma3:4b';
   let recommendedNote = '';
   if (totalRAMGB < 6) {
     recommendedLLM = 'llama3.2:3b';

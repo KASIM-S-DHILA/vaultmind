@@ -10,7 +10,7 @@ export function useSources(notebookId: string) {
       const list = await window.vaultmind.sources.list(notebookId);
       setSources(list);
     } catch {
-      // Silently fail
+      // Silently fail — loading will remain empty
     } finally {
       setLoading(false);
     }

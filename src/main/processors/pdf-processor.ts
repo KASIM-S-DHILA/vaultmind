@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { readFile } from 'fs/promises';
 import pdfParse from 'pdf-parse';
 
 interface PageData {
@@ -7,7 +7,7 @@ interface PageData {
 }
 
 export async function processPDF(filePath: string): Promise<PageData[]> {
-  const buffer = fs.readFileSync(filePath);
+  const buffer = await readFile(filePath);
 
   const data = await pdfParse(buffer, {
     pagerender: (pageData: any) => {

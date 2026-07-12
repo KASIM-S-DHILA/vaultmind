@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { readFile } from 'fs/promises';
 import path from 'path';
 
 interface PageData {
@@ -8,7 +8,7 @@ interface PageData {
 
 export async function processText(filePath: string): Promise<PageData[]> {
   const ext = path.extname(filePath).toLowerCase();
-  const raw = fs.readFileSync(filePath);
+  const raw = await readFile(filePath);
   // Detect binary files (files with null bytes or high proportion of non-text bytes)
   const nullByteCount = raw.filter(b => b === 0).length;
   const nonAsciiCount = raw.filter(b => b > 127 && b < 32 && b !== 9 && b !== 10 && b !== 13).length;

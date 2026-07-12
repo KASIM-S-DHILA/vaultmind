@@ -76,7 +76,12 @@ export async function fetchAndClean(url: string, snippet: string, title: string)
         reject(new Error(`Load failed: ${desc}`));
       });
 
-      win!.loadURL(url);
+      try {
+        win!.loadURL(url);
+      } catch (err) {
+        clearTimeout(timer);
+        reject(new Error(`Failed to load URL: ${err instanceof Error ? err.message : String(err)}`));
+      }
     });
 
     const markdown = extractContent(html, url);

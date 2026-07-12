@@ -51,7 +51,7 @@ export async function generateNotebookGuide(notebookId: string, sourceIds?: stri
       return JSON.parse(jsonMatch[0]) as NotebookGuide;
     }
   } catch (err) {
-    logger.error('Summarizer', 'Failed to parse guide JSON:', (err as Error).message);
+    logger.error('Summarizer', 'Failed to parse guide JSON:', err instanceof Error ? err.message : String(err));
   }
 
   return { overview: fullResponse.slice(0, 300), keyThemes: [], suggestedQuestions: [] };

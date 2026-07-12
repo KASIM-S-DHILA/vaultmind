@@ -47,9 +47,6 @@ export const IPC = {
     GET: 'settings:get',
     UPDATE: 'settings:update',
     GET_AVAILABLE_MODELS: 'settings:getAvailableModels',
-    DOWNLOAD_MODEL: 'settings:downloadModel',
-    SET_ACTIVE_MODEL: 'settings:setActiveModel',
-    DELETE_MODEL: 'settings:deleteModel',
     LIST_OLLAMA_MODELS: 'settings:listOllamaModels',
     SYSTEM_INFO: 'settings:systemInfo',
   },
@@ -73,14 +70,8 @@ export const IPC = {
     DOWNLOAD_MODEL: 'setup:downloadModel',
     COMPLETE: 'setup:complete',
   },
-  MODEL: {
-    DOWNLOAD_PROGRESS: 'model:downloadProgress',
-  },
   SERVER: {
     STATUS: 'server:status',
-  },
-  WEB_SEARCH: {
-    SEARCH: 'web-search:search',
   },
   EXTERNAL: {
     OPEN: 'open-external',

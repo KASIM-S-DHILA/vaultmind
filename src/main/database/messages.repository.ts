@@ -2,10 +2,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { dbGet, dbRun, dbAll, getDb } from './sqlite';
 import type { Message } from '../../shared/types';
 
+let _hasSessionCol: boolean | null = null;
+
 function hasSessionColumn(): boolean {
+  if (_hasSessionCol !== null) return _hasSessionCol;
   try {
     const cols = getDb().prepare("PRAGMA table_info('messages')").all() as Array<{ name: string }>;
-    return cols.some(c => c.name === 'session_id');
+    _hasSessionCol = cols.some(c => c.name === 'session_id');
+    return _hasSessionCol;
   } catch {
     return false;
   }
