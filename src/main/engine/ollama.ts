@@ -67,7 +67,6 @@ export async function startOllamaServer(): Promise<void> {
   ollamaProcess = spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-NonInteractive', '-Command', 'ollama serve'], {
     stdio: 'ignore',
     windowsHide: true,
-    detached: true,
   });
   ollamaProcess.unref();
   ollamaProcess.on('error', (err) => {
