@@ -5,8 +5,7 @@ import { initDatabase } from './database/sqlite';
 import { initVectorStore } from './engine/vector-store';
 import { createMainWindow, createTray } from './window-manager';
 import { isSetupComplete } from './setup/system-check';
-import { startOllamaServer, waitForOllamaReady, setCurrentStatus } from './engine/ollama';
-import { OLLAMA_STARTUP_TIMEOUT, OLLAMA_EXTENDED_TIMEOUT } from '../shared/constants';
+import { startOllamaServer, stopOllamaServer, setCurrentStatus } from './engine/ollama';
 import { logger } from '../shared/logger';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -60,33 +59,27 @@ app.whenReady().then(async () => {
   registerAllHandlers();
 
   broadcastStatus('ollama', 50, 'Starting Ollama AI server...');
-  startOllamaServer().catch(err => logger.warn('Main', 'Ollama start warning:', err.message));
+  setCurrentStatus('starting', 50, 'Starting Ollama AI server...');
 
-  // Don't block UI — create main window immediately, poll ollama in background
+  // Don't block UI — create main window immediately, start ollama in background
   mainWindow = createMainWindow(splashWindow);
   (async () => {
-    const quickReady = await waitForOllamaReady(OLLAMA_STARTUP_TIMEOUT);
-    if (quickReady) {
+    const ok = await startOllamaServer((phase, pct, msg) => {
+      setCurrentStatus(phase === 'error' ? 'error' : 'starting', pct, msg);
+      broadcastStatus(phase === 'error' ? 'error' : 'starting', pct, msg);
+    });
+    if (ok) {
       setCurrentStatus('ready', 100, 'Ollama AI ready!');
       broadcastStatus('ready', 100, 'Ollama AI ready!');
-      return;
+    } else {
+      setCurrentStatus('error', 0, 'Ollama failed to start');
+      broadcastStatus('error', 0, 'Ollama failed to start');
     }
-    // Extended polling — keep trying for up to OLLAMA_EXTENDED_TIMEOUT total
-    const extendedStart = Date.now();
-    while (Date.now() - extendedStart < OLLAMA_EXTENDED_TIMEOUT) {
-      const stillReady = await waitForOllamaReady(15000);
-      if (stillReady) {
-        setCurrentStatus('ready', 100, 'Ollama AI ready!');
-        broadcastStatus('ready', 100, 'Ollama AI ready!');
-        return;
-      }
-      setCurrentStatus('starting', 80, 'Still starting Ollama...');
-      broadcastStatus('starting', 80, 'Still starting Ollama...');
-    }
-    setCurrentStatus('error', 0, 'Ollama failed to start — check installation');
-    broadcastStatus('error', 0, 'Ollama failed to start — check installation');
   })();
   createTray(mainWindow);
+
+  // Cleanup server on quit
+  app.on('before-quit', () => stopOllamaServer());
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
