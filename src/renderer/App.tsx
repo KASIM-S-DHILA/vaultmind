@@ -3,6 +3,7 @@ import SetupWizard from './pages/SetupWizard';
 import NotebookList from './pages/NotebookList';
 import NotebookView from './pages/NotebookView';
 import Toast from './components/shared/Toast';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 import { ToastProvider } from './hooks/useToast';
 import type { Notebook } from '../shared/types';
 
@@ -20,6 +21,16 @@ export default function App() {
       }
     }
     init();
+  }, []);
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        window.vaultmind?.window?.openDevTools?.();
+      }
+    }
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
 
   function openNotebook(notebook: Notebook) {
@@ -53,7 +64,9 @@ export default function App() {
         {page === 'setup' && <SetupWizard onComplete={onSetupComplete} />}
         {page === 'home' && <NotebookList onOpenNotebook={openNotebook} />}
         {page === 'notebook' && activeNotebook && (
-          <NotebookView notebook={activeNotebook} onBack={goHome} />
+          <ErrorBoundary key={activeNotebook.id}>
+            <NotebookView notebook={activeNotebook} onBack={goHome} />
+          </ErrorBoundary>
         )}
         <Toast />
       </div>

@@ -1,4 +1,4 @@
-import { ipcMain, shell } from 'electron';
+import { ipcMain, shell, BrowserWindow } from 'electron';
 import { IPC } from '../../shared/constants';
 import { registerNotebookHandlers } from './notebooks.handler';
 import { registerSourceHandlers } from './sources.handler';
@@ -21,4 +21,10 @@ export function registerAllHandlers(): void {
 
   // External links
   ipcMain.on(IPC.EXTERNAL.OPEN, (_event, url: string) => shell.openExternal(url));
+
+  // DevTools (Ctrl+Shift+I)
+  ipcMain.on(IPC.WINDOW.DEVTOOLS, (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.webContents.openDevTools();
+  });
 }

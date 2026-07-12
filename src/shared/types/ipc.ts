@@ -5,6 +5,7 @@ export const IPC = {
     CLOSE: 'window:close',
     IS_MAXIMIZED: 'window:isMaximized',
     MAXIMIZED: 'window:maximized',
+    DEVTOOLS: 'window:devtools',
   },
   DIALOG: {
     SELECT_FILES: 'dialog:selectFiles',

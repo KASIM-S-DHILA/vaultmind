@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('vaultmind', {
     maximize: () => ipcRenderer.send(IPC.WINDOW.MAXIMIZE),
     close: () => ipcRenderer.send(IPC.WINDOW.CLOSE),
     isMaximized: () => ipcRenderer.sendSync(IPC.WINDOW.IS_MAXIMIZED),
+    openDevTools: () => ipcRenderer.send(IPC.WINDOW.DEVTOOLS),
     onMaximizeChange: (cb: (val: boolean) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, val: boolean) => cb(val);
       ipcRenderer.on(IPC.WINDOW.MAXIMIZED, listener);

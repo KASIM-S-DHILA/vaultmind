@@ -11,7 +11,7 @@ export default function ChatPanel({
   const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [showSessions, setShowSessions] = useState(false);
-  const [renamingSession, setRenamingSession] = useState<string | null>(null);
+  const [renamingSession, setRenamingSession] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
