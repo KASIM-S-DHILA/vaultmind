@@ -111,7 +111,7 @@ CONTEXT:
           created_at INTEGER NOT NULL,
           updated_at INTEGER NOT NULL
         );
-        ALTER TABLE messages ADD COLUMN session_id TEXT REFERENCES chat_sessions(id) ON DELETE SET NULL;
+        ALTER TABLE messages ADD COLUMN session_id TEXT;
       `);
       // Create a default session for each notebook that has messages
       const notebooks = db.prepare('SELECT DISTINCT notebook_id FROM messages').all() as { notebook_id: string }[];
