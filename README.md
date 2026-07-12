@@ -1,124 +1,108 @@
-# VaultMind — Local AI for Legal & Confidential Intelligence
+# VaultMind
 
-> 100% offline, open-source RAG assistant for legal teams and professionals.
-> Process PDFs, documents, and meeting recordings with AI — no data ever leaves your device.
-
----
+Private AI assistant for legal and confidential document work.
+100% offline. No data ever leaves your device.
 
 ## Features
 
-- 🔒 **Fully Offline** — No cloud API, no telemetry, no internet required after setup
-- 📄 **PDF, Text & Audio** — Upload contracts, notes, and meeting recordings
-- ⚖️ **Legal-Grade AI** — Source-grounded answers with inline citations
-- 🔄 **Swappable Models** — Switch between Phi-4 Mini, Llama 3.2, Qwen3, and any GGUF model
-- 📋 **NotebookLM-Style UI** — Three-panel layout: Sources · Chat · Studio
-- 🎙️ **Audio Transcription** — Local Whisper transcription for meeting recordings
-
----
+- **Fully offline** — No cloud API, no telemetry, no internet required after setup
+- **PDF, text & audio** — Upload contracts, notes, and meeting recordings
+- **Source-grounded answers** — Every response cites its sources
+- **Swappable models** — Switch between Phi-4 Mini, Llama 3.2, Qwen3, and any GGUF model
+- **NotebookLM-style UI** — Three-panel layout: Sources, Chat, Studio
+- **Audio transcription** — Local Whisper transcription for meeting recordings
 
 ## Requirements
 
 | Spec | Minimum | Recommended |
-|---|---|---|
+|------|---------|-------------|
 | OS | Windows 10/11 | Windows 11 |
 | RAM | 8 GB | 16 GB |
 | Disk | 5 GB | 10 GB |
 | CPU | Intel i5 / Ryzen 5 | Intel i7 / Ryzen 7 |
 | GPU | Not required | NVIDIA (optional, faster) |
 
----
+## Installation
 
-## Installation (End Users)
+Download `VaultMind-Setup-1.0.0.exe` from the [releases page](https://github.com/KASIM-S-DHILA/vaultmind/releases) and run the installer. On first launch, the app will guide you through downloading the AI models (~2.5 GB). After setup, VaultMind works entirely offline.
 
-1. Download `VaultMind-Setup-X.X.X.exe` from the releases page
-2. Run the installer — follow the wizard
-3. On first launch, VaultMind will guide you through downloading the AI models (~2.5 GB)
-4. After setup, VaultMind works 100% offline
+## Development
 
----
+### Prerequisites
 
-## Development Setup & Sharing Code
+- [Node.js](https://nodejs.org/) 18+
+- [Ollama](https://ollama.com) (installed automatically in production builds)
 
-Instead of building a final installer for testing, you can share the raw source code folder. Multiple users/developers can test simultaneously or independently without overlapping each other's local configurations.
+### Setup
 
-### 1. Install Node.js
-Both users/developers must install [Node.js](https://nodejs.org/) (18+) on their laptops.
-
-### 2. Share the Code
-Share the project folder (excluding the `node_modules` and `models` folders to save size) via a GitHub repository, Google Drive, or a flash drive.
-
-### 3. Install Dependencies
-Open your terminal in the project folder and run:
 ```bash
+git clone https://github.com/KASIM-S-DHILA/vaultmind.git
+cd vaultmind
 npm install
 ```
 
-### 4. Run the App
-To instantly launch the application directly from the source code, run:
+### Run
+
 ```bash
-npm start
+npm run dev
 ```
-*(You can also use `npx electron .` or `npm run dev`)*
 
-### 5. Update in Real-Time
-When code changes are made, you only need to close the application window and re-run `npm start` to see the updates instantly.
+Launches the Vite dev server and Electron with hot reload.
 
----
+### Build installer
 
-### Build Installer
-If you want to compile a production installer:
 ```bash
 npm run build
 ```
-Creates `release/VaultMind-Setup-X.X.X.exe`.
 
----
+Output: `release/VaultMind-Setup-X.X.X.exe`.
 
-## Project Structure
+### Test
 
-```
-rag/
-├── src/
-│   ├── main/           # Electron main process (backend)
-│   │   ├── engine/     # LLM, embedder, vector store, RAG
-│   │   ├── processors/ # PDF, text, audio processors
-│   │   ├── database/   # SQLite (metadata)
-│   │   └── setup/      # Model download, system check
-│   └── renderer/       # React frontend (UI)
-│       ├── pages/      # SetupWizard, NotebookList, NotebookView
-│       ├── components/ # SourcesPanel, ChatPanel, StudioPanel
-│       └── hooks/      # useChat, useSources, useNotebook
-├── build/              # Installer assets + splash screen
-├── models/             # Downloaded models (gitignored)
-└── package.json
+```bash
+npm test
 ```
 
----
+## Project structure
 
-## Changing Models
+```
+src/
+├── main/           # Electron main process
+│   ├── engine/     # LLM client, embeddings, vector store, RAG pipeline
+│   ├── ipc/        # IPC handlers (one file per domain)
+│   ├── database/   # SQLite schema, migrations, repositories
+│   ├── processors/ # File ingestion: PDF, text, audio
+│   ├── search/     # Web search providers (DuckDuckGo, Google CSE)
+│   └── setup/      # First-run wizard, system checks
+├── renderer/       # React frontend
+│   ├── pages/      # SetupWizard, NotebookList, NotebookView
+│   ├── components/ # SourcesPanel, ChatPanel, StudioPanel, SettingsModal
+│   └── hooks/      # useChat, useSources, useNotebook, useSessions
+├── shared/         # Types, constants, logger (used by both processes)
+└── tests/          # Vitest test suite
+```
 
-Open **Settings** (⚙ icon in the top bar) → **Models** tab:
+## Changing models
+
+Open **Settings** (gear icon in the top bar) and go to the **Models** tab:
 
 - **Switch**: Click "Use This" next to any downloaded model
-- **Download**: Click "⬇ Download" for preset models (Phi-4 Mini, Llama 3.2, Qwen3, Whisper variants)
-- **Custom**: Paste any Hugging Face GGUF URL and download it
-- **Delete**: Remove models you no longer need (can't delete the currently active model)
+- **Download**: Click download for preset models (Phi-4 Mini, Llama 3.2, Qwen3, Whisper variants)
+- **Custom**: Paste any Hugging Face GGUF URL to download
+- **Delete**: Remove models you no longer need
 
 The model switch takes effect immediately — no restart required.
 
----
+## Data privacy
 
-## Data Privacy
+All data is stored locally at `%APPDATA%\VaultMind\`:
 
-All data is stored locally in `%APPDATA%\VaultMind\`:
 - `models/` — Downloaded AI models
 - `data/vectors/` — LanceDB vector embeddings
 - `vaultmind.db` — SQLite metadata (notebooks, sources, chat history, notes)
 
 No data is ever sent to any server. VaultMind makes no network requests during normal operation.
 
----
-
 ## License
 
-MIT License — see [LICENSE.md](LICENSE.md)
+MIT — see [LICENSE.md](LICENSE.md).
