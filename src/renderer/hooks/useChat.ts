@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import type { Message, Citation } from '../../shared/types';
 
 interface ChatResult {
@@ -12,26 +12,16 @@ export function useChat(notebookId: string, sessionId?: string) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const lastSessionRef = useRef(sessionId);
 
   useEffect(() => {
     if (!notebookId) return;
     loadHistory();
-    lastSessionRef.current = sessionId;
   }, [notebookId]);
-
-  // Separate effect for session changes (don't clear messages on initial load)
-  useEffect(() => {
-    if (!notebookId) return;
-    if (lastSessionRef.current !== undefined && lastSessionRef.current !== sessionId) {
-      loadHistory();
-    }
-    lastSessionRef.current = sessionId;
-  }, [sessionId, notebookId]);
 
   async function loadHistory() {
     try {
-      const history = await window.vaultmind.chat.getHistory(notebookId, sessionId);
+      // Always load messages for the notebook (not scoped to sessionId)
+      const history = await window.vaultmind.chat.getHistory(notebookId);
       setMessages(history);
     } catch (e) {
       setError((e as Error).message);

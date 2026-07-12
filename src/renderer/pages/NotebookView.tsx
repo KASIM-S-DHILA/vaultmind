@@ -47,10 +47,14 @@ export default function NotebookView({ notebook, onBack }: NotebookViewProps) {
 
   // Load sessions
   async function loadSessions() {
-    const list = await window.vaultmind.sessions.list(notebook.id);
-    setSessions(list);
-    if (!currentSessionId && list.length > 0) {
-      setCurrentSessionId(list[0].id);
+    try {
+      const list = await window.vaultmind.sessions.list(notebook.id);
+      setSessions(list);
+      if (!currentSessionId && list.length > 0) {
+        setCurrentSessionId(list[0].id);
+      }
+    } catch (e) {
+      console.error('Failed to load sessions:', e);
     }
   }
 
