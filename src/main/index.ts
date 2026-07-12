@@ -5,7 +5,8 @@ import { initDatabase } from './database/sqlite';
 import { initVectorStore } from './engine/vector-store';
 import { createMainWindow, createTray } from './window-manager';
 import { isSetupComplete } from './setup/system-check';
-import { startOllamaServer, stopOllamaServer, setCurrentStatus } from './engine/ollama';
+import { startOllamaServer, stopOllamaServer, setCurrentStatus, ensureOllamaInstalled, waitForOllamaReady } from './engine/ollama';
+import { OLLAMA_STARTUP_TIMEOUT, OLLAMA_EXTENDED_TIMEOUT } from '../shared/constants';
 import { logger } from '../shared/logger';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -59,22 +60,48 @@ app.whenReady().then(async () => {
   registerAllHandlers();
 
   broadcastStatus('ollama', 50, 'Starting Ollama AI server...');
-  setCurrentStatus('starting', 50, 'Starting Ollama AI server...');
 
   // Don't block UI — create main window immediately, start ollama in background
   mainWindow = createMainWindow(splashWindow);
   (async () => {
-    const ok = await startOllamaServer((phase, pct, msg) => {
-      setCurrentStatus(phase === 'error' ? 'error' : 'starting', pct, msg);
-      broadcastStatus(phase === 'error' ? 'error' : 'starting', pct, msg);
-    });
-    if (ok) {
+    // Step 1: Ensure ollama binary exists (auto-install if missing)
+    setCurrentStatus('starting', 10, 'Checking Ollama installation...');
+    broadcastStatus('starting', 10, 'Checking Ollama installation...');
+    const installed = await ensureOllamaInstalled();
+    if (!installed) {
+      setCurrentStatus('error', 0, 'Ollama is not installed');
+      broadcastStatus('error', 0, 'Ollama is not installed');
+      return;
+    }
+
+    // Step 2: Start the server (fire-and-forget spawn)
+    setCurrentStatus('starting', 40, 'Starting Ollama server...');
+    broadcastStatus('starting', 40, 'Starting Ollama server...');
+    await startOllamaServer();
+
+    // Step 3: Poll for readiness (30s quick + 120s extended)
+    setCurrentStatus('starting', 60, 'Waiting for Ollama server...');
+    broadcastStatus('starting', 60, 'Waiting for Ollama server...');
+    const ready = await waitForOllamaReady(OLLAMA_STARTUP_TIMEOUT);
+    if (ready) {
       setCurrentStatus('ready', 100, 'Ollama AI ready!');
       broadcastStatus('ready', 100, 'Ollama AI ready!');
-    } else {
-      setCurrentStatus('error', 0, 'Ollama failed to start');
-      broadcastStatus('error', 0, 'Ollama failed to start');
+      return;
     }
+    // Extended polling
+    const extendedStart = Date.now();
+    while (Date.now() - extendedStart < OLLAMA_EXTENDED_TIMEOUT) {
+      const stillReady = await waitForOllamaReady(15000);
+      if (stillReady) {
+        setCurrentStatus('ready', 100, 'Ollama AI ready!');
+        broadcastStatus('ready', 100, 'Ollama AI ready!');
+        return;
+      }
+      setCurrentStatus('starting', 80, 'Still waiting for Ollama...');
+      broadcastStatus('starting', 80, 'Still waiting for Ollama...');
+    }
+    setCurrentStatus('error', 0, 'Ollama failed to start');
+    broadcastStatus('error', 0, 'Ollama failed to start');
   })();
   createTray(mainWindow);
 

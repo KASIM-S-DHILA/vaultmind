@@ -26,128 +26,58 @@ async function getOllamaUrl(): Promise<string> {
   return getSetting('ollama_url') || 'http://127.0.0.1:11434';
 }
 
-async function assertOllamaInstalled(): Promise<boolean> {
+export async function ensureOllamaInstalled(): Promise<boolean> {
+  // Try direct exec first (ollama in PATH)
   try {
     execSync('ollama --version', { stdio: 'pipe', timeout: 5000, encoding: 'utf-8', windowsHide: true });
     return true;
-  } catch {
-    return false;
-  }
-}
+  } catch { /* try powershell fallback */ }
 
-async function installOllamaIfMissing(
-  onProgress?: (phase: string, pct: number, msg: string) => void,
-): Promise<boolean> {
-  const installed = await assertOllamaInstalled();
-  if (installed) return true;
-
-  onProgress?.('install', 0, 'Ollama not found — downloading installer...');
-  logger.info('Ollama', 'Binary not found — triggering auto-install');
+  // Fallback: check via powershell (same method as the actual spawn)
   try {
-    await downloadAndInstallOllama((p) => {
-      onProgress?.('install', p.percent, p.message);
+    execSync('powershell -NoProfile -NonInteractive -Command "ollama --version"', {
+      stdio: 'pipe', timeout: 10000, encoding: 'utf-8', windowsHide: true,
     });
-    onProgress?.('install', 100, 'Ollama installed');
     return true;
-  } catch (err) {
-    logger.error('Ollama', 'Auto-install failed:', (err as Error).message);
-    return false;
+  } catch {
+    logger.info('Ollama', 'Binary not found — triggering auto-install');
+    try {
+      await downloadAndInstallOllama(() => {});
+      return true;
+    } catch (err) {
+      logger.error('Ollama', 'Auto-install failed:', (err as Error).message);
+      return false;
+    }
   }
 }
 
-async function trySpawnOllama(): Promise<boolean> {
-  return new Promise((resolve) => {
-    try {
-      ollamaProcess = spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-NonInteractive', '-Command', 'ollama serve'], {
-        stdio: 'ignore',
-        windowsHide: true,
-        detached: true,
-      });
-      ollamaProcess.unref();
-
-      const errorTimer = setTimeout(() => {
-        // If no error fired within 2s, assume spawn succeeded
-        resolve(true);
-      }, 2000);
-
-      ollamaProcess.on('error', (err) => {
-        clearTimeout(errorTimer);
-        logger.warn('Ollama', 'Spawn failed:', err.message);
-        ollamaProcess = null;
-        resolve(false);
-      });
-
-      ollamaProcess.on('exit', (code) => {
-        logger.info('Ollama', 'Server exited with code', code);
-        ollamaProcess = null;
-      });
-    } catch (err) {
-      logger.error('Ollama', 'Unexpected spawn error:', (err as Error).message);
-      resolve(false);
-    }
-  });
-}
-
-export async function startOllamaServer(
-  onProgress?: (phase: string, pct: number, msg: string) => void,
-): Promise<boolean> {
-  // Phase 0: Already running?
-  setCurrentStatus('starting', 5, 'Checking existing server...');
+export async function startOllamaServer(): Promise<void> {
+  if (ollamaProcess) return;
   try {
     const res = await fetch((await getOllamaUrl()) + '/api/tags');
     if (res.ok) {
       logger.info('Ollama', 'Server already running');
-      setCurrentStatus('ready', 100, 'Ollama AI ready!');
-      return true;
+      return;
     }
-  } catch { /* not running */ }
-
-  // Phase 1: Ensure binary exists
-  onProgress?.('binary', 10, 'Checking Ollama installation...');
-  setCurrentStatus('starting', 10, 'Checking Ollama installation...');
-  const binaryOk = await installOllamaIfMissing(onProgress);
-  if (!binaryOk) {
-    setCurrentStatus('error', 0, 'Ollama is not installed and auto-install failed');
-    return false;
+  } catch {
+    // Server not running — proceed to start
   }
 
-  // Phase 2: Spawn server (with one retry)
-  onProgress?.('spawn', 40, 'Starting Ollama server...');
-  setCurrentStatus('starting', 40, 'Starting Ollama server...');
-  let spawned = await trySpawnOllama();
-  if (!spawned) {
-    logger.info('Ollama', 'First spawn attempt failed, retrying...');
-    onProgress?.('spawn', 40, 'Retrying...');
-    await new Promise(r => setTimeout(r, 1000));
-    spawned = await trySpawnOllama();
-  }
-  if (!spawned) {
-    setCurrentStatus('error', 0, 'Failed to launch Ollama server process');
-    return false;
-  }
-
-  // Phase 3: Wait for ready
-  onProgress?.('wait', 60, 'Waiting for Ollama server...');
-  setCurrentStatus('starting', 60, 'Waiting for Ollama server...');
-  const ready = await waitForOllamaReady(OLLAMA_STARTUP_TIMEOUT);
-  if (ready) {
-    setCurrentStatus('ready', 100, 'Ollama AI ready!');
-    return true;
-  }
-
-  // Phase 3 extended: keep trying for up to OLLAMA_EXTENDED_TIMEOUT more
-  const extendedStart = Date.now();
-  while (Date.now() - extendedStart < OLLAMA_EXTENDED_TIMEOUT) {
-    const stillReady = await waitForOllamaReady(15000);
-    if (stillReady) {
-      setCurrentStatus('ready', 100, 'Ollama AI ready!');
-      return true;
-    }
-    setCurrentStatus('starting', 80, 'Still waiting for Ollama...');
-  }
-
-  setCurrentStatus('error', 0, 'Ollama server did not become ready');
-  return false;
+  logger.info('Ollama', 'Starting server...');
+  ollamaProcess = spawn('powershell', ['-WindowStyle', 'Hidden', '-NoProfile', '-NonInteractive', '-Command', 'ollama serve'], {
+    stdio: 'ignore',
+    windowsHide: true,
+    detached: true,
+  });
+  ollamaProcess.unref();
+  ollamaProcess.on('error', (err) => {
+    logger.warn('Ollama', 'Failed to start server:', err.message);
+    ollamaProcess = null;
+  });
+  ollamaProcess.on('exit', (code) => {
+    logger.info('Ollama', 'Server exited with code', code);
+    ollamaProcess = null;
+  });
 }
 
 export async function waitForOllamaReady(timeoutMs = OLLAMA_STARTUP_TIMEOUT): Promise<boolean> {
@@ -276,8 +206,9 @@ export async function downloadAndInstallOllama(
   });
 
   onProgress({ percent: 90, status: 'starting', message: 'Starting Ollama server...' });
-  const started = await startOllamaServer();
-  if (!started) throw new Error('Ollama server did not start');
+  await startOllamaServer();
+  const ready = await waitForOllamaReady(30000);
+  if (!ready) throw new Error('Ollama server did not start');
   onProgress({ percent: 100, status: 'done', message: 'Ollama ready!' });
 }
 
