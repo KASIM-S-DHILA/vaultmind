@@ -68,6 +68,8 @@ export async function addChunks(notebookId: string, chunks: ChunkInput[]): Promi
 
   const tableName = tableNameFor(notebookId);
   const existing = await getDb().tableNames();
+  // Yield before the native LanceDB write to keep GUI responsive
+  await new Promise<void>(r => setTimeout(r, 0));
   if (existing.includes(tableName)) {
     const table = await getDb().openTable(tableName);
     await table.add(rows);

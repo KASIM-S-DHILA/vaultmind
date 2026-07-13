@@ -26,6 +26,20 @@ interface ProcessFileOptions {
 
 const SUPPORTED_TYPES = ['pdf', 'txt', 'md', 'csv'];
 
+function yieldToGUI(): Promise<void> {
+  return new Promise<void>(r => setTimeout(r, 0));
+}
+
+const PAGE_BATCH_SIZE = 1;
+
+function pagesInBatches(pages: Array<{ pageNum: number; text: string }>): Array<Array<{ pageNum: number; text: string }>> {
+  const batches: Array<Array<{ pageNum: number; text: string }>> = [];
+  for (let i = 0; i < pages.length; i += PAGE_BATCH_SIZE) {
+    batches.push(pages.slice(i, i + PAGE_BATCH_SIZE));
+  }
+  return batches;
+}
+
 export async function processFile(options: ProcessFileOptions): Promise<void> {
   const { id, filePath, fileType, notebookId, sendProgress } = options;
 
@@ -34,6 +48,7 @@ export async function processFile(options: ProcessFileOptions): Promise<void> {
   }
 
   sendProgress({ status: 'processing', progress: 5, message: 'Reading file...' });
+  await yieldToGUI();
 
   let pages: Array<{ pageNum: number; text: string }> = [];
 
@@ -43,22 +58,48 @@ export async function processFile(options: ProcessFileOptions): Promise<void> {
   } else {
     pages = await processText(filePath);
   }
+  await yieldToGUI();
 
-  sendProgress({ status: 'processing', progress: 55, message: 'Splitting into chunks...' });
   const filename = path.basename(filePath);
-  const chunks = chunkText(pages, { sourceId: id, sourceTitle: filename });
+  const totalPages = pages.length;
+  let totalChunks = 0;
+  let firstBatch = true;
 
-  sendProgress({ status: 'processing', progress: 60, message: 'Generating summary...' });
-  const sampleText = pages.slice(0, 3).map(p => p.text).join('\n\n');
-  const summary = await generateSourceSummary(id, sampleText);
-  updateSourceStatus(id, 'processing', { summary });
+  for (const batch of pagesInBatches(pages)) {
+    sendProgress({
+      status: 'processing',
+      progress: 15,
+      message: `Chunking batch ${batch[0].pageNum}-${batch[batch.length - 1].pageNum} of ${totalPages}...`,
+    });
+    await yieldToGUI();
+    const chunks = await chunkText(batch, { sourceId: id, sourceTitle: filename });
+    totalChunks += chunks.length;
 
-  sendProgress({ status: 'processing', progress: 70, message: `Embedding ${chunks.length} chunks...` });
-  await addChunks(notebookId, chunks);
+    if (chunks.length === 0) continue;
+
+    // Generate summary on the first batch only (from first 3 pages of the doc)
+    if (firstBatch) {
+      sendProgress({ status: 'processing', progress: 18, message: 'Generating summary...' });
+      await yieldToGUI();
+      const sampleText = pages.slice(0, 3).map(p => p.text).join('\n\n');
+      const summary = await generateSourceSummary(id, sampleText);
+      updateSourceStatus(id, 'processing', { summary });
+      await yieldToGUI();
+      firstBatch = false;
+    }
+
+    sendProgress({
+      status: 'processing',
+      progress: 20,
+      message: `Embedding batch ${batch[0].pageNum}-${batch[batch.length - 1].pageNum} (${chunks.length} chunks)...`,
+    });
+    await yieldToGUI();
+    await addChunks(notebookId, chunks);
+  }
 
   const stats = await stat(filePath);
-  updateSourceStatus(id, 'ready', { chunk_count: chunks.length });
+  updateSourceStatus(id, 'ready', { chunk_count: totalChunks });
 
-  logger.info('Processor', `File processed: ${filename} (${chunks.length} chunks, ${stats.size} bytes)`);
+  logger.info('Processor', `File processed: ${filename} (${totalChunks} chunks, ${stats.size} bytes)`);
   sendProgress({ status: 'ready', progress: 100, message: 'Ready' });
 }

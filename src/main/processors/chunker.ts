@@ -16,14 +16,15 @@ interface ChunkInput {
   text: string;
 }
 
-export function chunkText(
+export async function chunkText(
   pages: PageData[],
   { sourceId, sourceTitle }: { sourceId: string; sourceTitle: string },
-): ChunkInput[] {
+): Promise<ChunkInput[]> {
   const chunkSize = parseInt(getSetting('chunk_size') || String(CHUNK_DEFAULTS.SIZE), 10);
   const chunkOverlap = parseInt(getSetting('chunk_overlap') || String(CHUNK_DEFAULTS.OVERLAP), 10);
 
   const chunks: ChunkInput[] = [];
+  let sentenceCount = 0;
 
   for (const { pageNum, text } of pages) {
     const sentences = splitIntoSentences(text);
@@ -44,6 +45,11 @@ export function chunkText(
         buffer = buffer.slice(-chunkOverlap) + sentence;
       } else {
         buffer += (buffer ? ' ' : '') + sentence;
+      }
+
+      sentenceCount++;
+      if (sentenceCount % 10 === 0) {
+        await new Promise<void>(r => setTimeout(r, 0));
       }
     }
 

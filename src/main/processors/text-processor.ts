@@ -6,6 +6,10 @@ interface PageData {
   text: string;
 }
 
+function yieldToGUI(): Promise<void> {
+  return new Promise<void>(r => setTimeout(r, 0));
+}
+
 export async function processText(filePath: string): Promise<PageData[]> {
   const ext = path.extname(filePath).toLowerCase();
   const raw = await readFile(filePath);
@@ -34,6 +38,7 @@ export async function processText(filePath: string): Promise<PageData[]> {
       const values = line.split(',').map(v => v.trim());
       return headers.map((h, i) => `${h}: ${values[i] || ''}`).join(', ');
     }).join('\n');
+      await yieldToGUI();
   }
 
   const paragraphs = content.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 20);
@@ -42,7 +47,8 @@ export async function processText(filePath: string): Promise<PageData[]> {
   let currentPage = '';
   let pageNum = 1;
 
-  for (const para of paragraphs) {
+  for (let i = 0; i < paragraphs.length; i++) {
+    const para = paragraphs[i];
     if (currentPage.length + para.length > 1500) {
       if (currentPage) {
         pages.push({ pageNum, text: currentPage.trim() });
@@ -51,6 +57,9 @@ export async function processText(filePath: string): Promise<PageData[]> {
       currentPage = para;
     } else {
       currentPage += (currentPage ? '\n\n' : '') + para;
+    }
+    if (i % 20 === 0) {
+    await yieldToGUI();
     }
   }
   if (currentPage.trim()) pages.push({ pageNum, text: currentPage.trim() });

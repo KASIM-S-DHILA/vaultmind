@@ -3,10 +3,12 @@ import React from 'react';
 interface OllamaStepProps {
   ollamaProgress: { status: string; percent: number; message: string };
   pull: { status: string; percent: number; message: string };
+  onRetry?: () => void;
 }
 
-export default function OllamaStep({ ollamaProgress, pull }: OllamaStepProps) {
+export default function OllamaStep({ ollamaProgress, pull, onRetry }: OllamaStepProps) {
   const isPulling = pull.status === 'pulling' || pull.status === 'done' || pull.status === 'error';
+  const isError = ollamaProgress.status === 'error';
 
   return (
     <div>
@@ -18,7 +20,7 @@ export default function OllamaStep({ ollamaProgress, pull }: OllamaStepProps) {
       {/* Ollama download step */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', marginBottom: 12, background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', opacity: isPulling ? 0.5 : 1 }}>
         <span style={{ fontSize: 16 }}>
-          {ollamaProgress.status === 'done' ? '✅' : ollamaProgress.status === 'error' ? '❌' : '⏳'}
+          {ollamaProgress.status === 'done' ? '✅' : isError ? '❌' : '⏳'}
         </span>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>AI Engine (Ollama)</div>
@@ -49,21 +51,44 @@ export default function OllamaStep({ ollamaProgress, pull }: OllamaStepProps) {
         {pull.status === 'pulling' && <div className="spinner spinner-sm" />}
       </div>
 
-      {ollamaProgress.status === 'error' && (
+      {isError && (
         <div style={{ padding: '10px 14px', background: 'var(--error-bg)', borderRadius: 'var(--radius)', border: '1px solid rgba(248,113,113,0.2)', fontSize: 12, color: 'var(--error)', marginBottom: 16 }}>
-          ❌ {ollamaProgress.message}
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>Something went wrong</div>
+          <div style={{ marginBottom: 8, lineHeight: 1.5 }}>{ollamaProgress.message}</div>
+          <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 8, lineHeight: 1.5 }}>
+            You can also download Ollama manually from{' '}
+            <a href="#" onClick={(e) => { e.preventDefault(); window.vaultmind.shell.openExternal('https://ollama.com/download'); }} style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+              ollama.com/download
+            </a>
+            , install it, then come back here and click Retry.
+          </div>
+          {onRetry && (
+            <button className="btn btn-sm" onClick={onRetry} style={{ marginTop: 2 }}>
+              Retry
+            </button>
+          )}
         </div>
       )}
 
       {pull.status === 'error' && (
         <div style={{ padding: '10px 14px', background: 'var(--error-bg)', borderRadius: 'var(--radius)', border: '1px solid rgba(248,113,113,0.2)', fontSize: 12, color: 'var(--error)', marginBottom: 16 }}>
-          ❌ {pull.message}
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>Failed to download AI model</div>
+          <div style={{ marginBottom: 8, lineHeight: 1.5 }}>{pull.message}</div>
+          <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 8, lineHeight: 1.5 }}>
+            You can also pull the model manually by opening a terminal and running:<br />
+            <code style={{ background: 'var(--bg-app)', padding: '2px 6px', borderRadius: 4, fontSize: 11 }}>ollama pull gemma3:4b</code>
+          </div>
+          {onRetry && (
+            <button className="btn btn-sm" onClick={onRetry} style={{ marginTop: 2 }}>
+              Retry
+            </button>
+          )}
         </div>
       )}
 
       {pull.status === 'done' && (
         <div style={{ padding: '10px 14px', background: 'var(--success-bg)', borderRadius: 'var(--radius)', border: '1px solid rgba(52,211,153,0.2)', fontSize: 12, color: 'var(--success)', textAlign: 'center' }}>
-          ✅ All components ready! Click "Launch VaultMind" below.
+          All components ready! Click "Launch VaultMind" below.
         </div>
       )}
     </div>

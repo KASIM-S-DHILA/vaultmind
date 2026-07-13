@@ -93,6 +93,8 @@ export default function SettingsModal({ onClose, onModelChange, ollamaStatus, on
   const [ollamaError, setOllamaError] = useState(null);
   const [serverStarting, setServerStarting] = useState(false);
   const [autoStart, setAutoStart] = useState(false);
+  const [pullModelName, setPullModelName] = useState('gemma3:4b');
+  const [pullProgress, setPullProgress] = useState({ status: 'idle', percent: 0, message: '' });
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -124,6 +126,20 @@ export default function SettingsModal({ onClose, onModelChange, ollamaStatus, on
       setOllamaError('Connection failed. Make sure Ollama is running (check system tray).');
     } finally {
       setOllamaLoading(false);
+    }
+  }
+
+  async function handlePullModel() {
+    setPullProgress({ status: 'pulling', percent: 0, message: `Pulling ${pullModelName}...` });
+    try {
+      await window.vaultmind.ollama.pullModel(pullModelName, (p) => {
+        setPullProgress({ status: 'pulling', percent: p.percent || 0, message: p.message || `Pulling ${pullModelName}...` });
+      });
+      setPullProgress({ status: 'done', percent: 100, message: `${pullModelName} ready!` });
+      addToast(`Model ${pullModelName} downloaded!`, 'success');
+      fetchOllamaModels();
+    } catch (e) {
+      setPullProgress({ status: 'error', percent: 0, message: e.message || String(e) });
     }
   }
 
@@ -244,7 +260,18 @@ export default function SettingsModal({ onClose, onModelChange, ollamaStatus, on
 
               {ollamaError && (
                 <div style={{ padding: '10px 12px', background: 'var(--error-bg)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 'var(--radius)', fontSize: 12, color: 'var(--error)', marginBottom: 14 }}>
-                  ⚠️ {ollamaError}
+                  <div style={{ marginBottom: 6 }}>{ollamaError}</div>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <button className="btn btn-sm" onClick={fetchOllamaModels} disabled={ollamaLoading}>
+                      {ollamaLoading ? 'Connecting...' : 'Retry'}
+                    </button>
+                    <span style={{ fontSize: 11, opacity: 0.8 }}>
+                      Make sure Ollama is running (check system tray) or{' '}
+                      <a href="#" onClick={(e) => { e.preventDefault(); window.vaultmind.openExternal('https://ollama.com/download'); }} style={{ color: 'var(--accent)', textDecoration: 'underline' }}>
+                        download Ollama
+                      </a>
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -266,11 +293,64 @@ export default function SettingsModal({ onClose, onModelChange, ollamaStatus, on
                       <option key={m.name} value={m.name}>{m.name}</option>
                     ))}
                   </select>
-                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6 }}>
-                    All AI requests use Ollama. Run <code>ollama pull &lt;model&gt;</code> in terminal to add more models.
-                  </div>
                 </div>
               )}
+
+              {/* Pull model section */}
+              <div style={{ marginTop: 16, padding: 14, background: 'var(--bg)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                <label style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+                  Download a New Model
+                </label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    className="input"
+                    value={pullModelName}
+                    onChange={e => setPullModelName(e.target.value)}
+                    placeholder="gemma3:4b"
+                    style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                    disabled={pullProgress.status === 'pulling'}
+                  />
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={handlePullModel}
+                    disabled={pullProgress.status === 'pulling' || !pullModelName.trim()}
+                  >
+                    {pullProgress.status === 'pulling' ? 'Downloading...' : 'Download'}
+                  </button>
+                </div>
+
+                {pullProgress.status === 'pulling' && pullProgress.percent > 0 && (
+                  <div className="progress-bar" style={{ marginTop: 8 }}>
+                    <div className="progress-bar-fill" style={{ width: `${pullProgress.percent}%` }} />
+                  </div>
+                )}
+
+                {pullProgress.status === 'pulling' && (
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6 }}>
+                    {pullProgress.message}
+                  </div>
+                )}
+
+                {pullProgress.status === 'error' && (
+                  <div style={{ padding: '10px 12px', marginTop: 12, background: 'var(--error-bg)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 'var(--radius)', fontSize: 12, color: 'var(--error)' }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Download failed</div>
+                    <div style={{ marginBottom: 8, lineHeight: 1.5 }}>{pullProgress.message}</div>
+                    <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 8, lineHeight: 1.5 }}>
+                      You can also pull the model manually by opening a terminal and running:<br />
+                      <code style={{ background: 'var(--bg-app)', padding: '2px 6px', borderRadius: 4, fontSize: 11 }}>ollama pull {pullModelName}</code>
+                    </div>
+                    <button className="btn btn-sm" onClick={handlePullModel} style={{ marginTop: 2 }}>
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                {pullProgress.status === 'done' && (
+                  <div style={{ padding: '8px 12px', marginTop: 8, background: 'var(--success-bg)', borderRadius: 'var(--radius)', border: '1px solid rgba(52,211,153,0.2)', fontSize: 12, color: 'var(--success)', textAlign: 'center' }}>
+                    {pullModelName} is ready!
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Auto-start toggle */}

@@ -57,6 +57,7 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
         results.push(Array.from(vec));
       }
     }
+    await new Promise<void>(r => setTimeout(r, 0));
   }
   return results;
 }

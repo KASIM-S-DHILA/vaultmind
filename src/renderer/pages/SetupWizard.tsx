@@ -24,18 +24,23 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
     setStep(1);
     setOllamaProgress({ status: 'checking', percent: 0, message: 'Checking Ollama...' });
 
-    const inst = await window.vaultmind.ollama.checkInstalled();
-    if (!inst.installed) {
-      setOllamaProgress({ status: 'downloading', percent: 0, message: 'Downloading Ollama...' });
-      await window.vaultmind.ollama.downloadAndInstall((p: any) => {
-        setOllamaProgress({ status: p.status, percent: p.percent, message: p.message });
-      });
-    } else {
-      const running = await window.vaultmind.ollama.checkRunning();
-      if (!running) {
-        setOllamaProgress({ status: 'starting', percent: 0, message: 'Starting Ollama...' });
-        await window.vaultmind.ollama.startServer();
+    try {
+      const inst = await window.vaultmind.ollama.checkInstalled();
+      if (!inst.installed) {
+        setOllamaProgress({ status: 'downloading', percent: 0, message: 'Downloading Ollama...' });
+        await window.vaultmind.ollama.downloadAndInstall((p: any) => {
+          setOllamaProgress({ status: p.status, percent: p.percent, message: p.message });
+        });
+      } else {
+        const running = await window.vaultmind.ollama.checkRunning();
+        if (!running) {
+          setOllamaProgress({ status: 'starting', percent: 0, message: 'Starting Ollama...' });
+          await window.vaultmind.ollama.startServer();
+        }
       }
+    } catch (e) {
+      setOllamaProgress({ status: 'error', percent: 0, message: (e as Error).message });
+      return;
     }
 
     setOllamaPull({ status: 'pulling', percent: 0, message: `Pulling ${selectedModel}...` });
@@ -46,6 +51,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
       setOllamaPull({ status: 'done', percent: 100, message: `${selectedModel} ready!` });
     } catch (e) {
       setOllamaPull({ status: 'error', percent: 0, message: (e as Error).message });
+      return;
     }
 
     setStep(2);
@@ -121,6 +127,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
               <OllamaStep
                 ollamaProgress={ollamaProgress}
                 pull={ollamaPull}
+                onRetry={runSetup}
               />
             )}
             {step === 2 && <ReadyStep />}
